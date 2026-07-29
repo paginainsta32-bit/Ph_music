@@ -1,11 +1,12 @@
 let musicas = [];
+let emModoPastas = false;
 
 window.onload = () => {
     carregarMusicas();
-    configurarLeitorDePasta();
+    configurarBotaoPasta();
 };
 
-// Função para buscar as músicas da sua API/R2
+// Busca as músicas na sua API/R2
 async function carregarMusicas() {
     console.log("Iniciando busca de músicas...");
     
@@ -30,11 +31,13 @@ async function carregarMusicas() {
             return;
         }
 
-        // Mapeia garantindo a capa padrão
+        // Mapeia os dados da API garantindo os campos necessários
         musicas = dadosBrutos.map(item => ({
             ...item,
             titulo: item.titulo || item.nome || item.title || "Sem Título",
             artista: item.artista || item.artist || "Artista Desconhecido",
+            // Define a pasta/categoria baseada na API (ou usa o nome do artista como fallback)
+            pasta: item.pasta || item.categoria || item.genero || item.artista || "Outros",
             capa: item.capa || item.cover || "assets/capa-default.jpg"
         }));
 
@@ -49,8 +52,9 @@ async function carregarMusicas() {
     }
 }
 
-// Renderiza os cards na tela
+// Renderiza a lista de músicas
 function mostrarMusicas(lista) {
+    emModoPastas = false;
     const container = document.getElementById("lista-musicas");
     if (!container) return;
 
@@ -72,7 +76,9 @@ function mostrarMusicas(lista) {
 
         card.onclick = () => {
             if (typeof tocarMusica === 'function') {
-                tocarMusica(index);
+                // Toca a música correspondente
+                const indexOriginal = musicas.findIndex(m => m === musica);
+                tocarMusica(indexOriginal !== -1 ? indexOriginal : index);
             }
         };
 
@@ -80,53 +86,63 @@ function mostrarMusicas(lista) {
     });
 }
 
-// Configuração do botão "Abrir Pasta"
-function configurarLeitorDePasta() {
-    const btnPasta = document.getElementById("btn-pasta");
-    const inputPasta = document.getElementById("input-pasta");
+// Agrupa as músicas por pasta e mostra na tela
+function mostrarPastas() {
+    emModoPastas = true;
+    const container = document.getElementById("lista-musicas");
+    if (!container) return;
 
-    if (!btnPasta || !inputPasta) return;
+    container.innerHTML = "";
+
+    // Agrupa as músicas pelos nomes das pastas
+    const pastas = {};
+    musicas.forEach(musica => {
+        const nomePasta = musica.pasta || "Geral";
+        if (!pastas[nomePasta]) {
+            pastas[nomePasta] = [];
+        }
+        pastas[nomePasta].push(musica);
+    });
+
+    // Cria os cards visuais para cada pasta
+    Object.keys(pastas).forEach(nomePasta => {
+        const qtd = pastas[nomePasta].length;
+        const card = document.createElement("div");
+        card.className = "card card-pasta";
+
+        card.innerHTML = `
+            <div style="height:230px; background:#222; display:flex; align-items:center; justify-content:center; font-size:64px;">
+                📁
+            </div>
+            <div class="card-info">
+                <h3>${nomePasta}</h3>
+                <p>${qtd} ${qtd === 1 ? 'música' : 'músicas'}</p>
+            </div>
+        `;
+
+        // Ao clicar na pasta, exibe apenas as músicas pertencentes a ela
+        card.onclick = () => {
+            mostrarMusicas(pastas[nomePasta]);
+        };
+
+        container.appendChild(card);
+    });
+}
+
+// Configuração do botão "Abrir Pasta"
+function configurarBotaoPasta() {
+    const btnPasta = document.getElementById("btn-pasta");
+    if (!btnPasta) return;
 
     btnPasta.onclick = () => {
-        inputPasta.click();
-    };
-
-    inputPasta.onchange = (evento) => {
-        const arquivos = Array.from(evento.target.files);
-        
-        const arquivosAudio = arquivos.filter(arquivo => 
-            arquivo.type.startsWith("audio/") || 
-            arquivo.name.endsWith(".mp3") || 
-            arquivo.name.endsWith(".wav") || 
-            arquivo.name.endsWith(".m4a")
-        );
-
-        if (arquivosAudio.length === 0) {
-            alert("Nenhum arquivo de áudio encontrado na pasta selecionada.");
-            return;
+        if (emModoPastas) {
+            // Se já estiver vendo pastas, clica para voltar a mostrar todas as músicas
+            mostrarMusicas(musicas);
+            btnPasta.innerHTML = "📁 Ver por Pastas";
+        } else {
+            // Alterna para o modo de exibição por pastas
+            mostrarPastas();
+            btnPasta.innerHTML = "🎵 Ver Todas";
         }
-
-        const musicasLocais = arquivosAudio.map((arquivo) => {
-            const nomeSemExtensao = arquivo.name.replace(/\.[^/.]+$/, "");
-            const partes = nomeSemExtensao.split("-");
-            
-            let titulo = nomeSemExtensao;
-            let artista = "Arquivo Local";
-
-            if (partes.length > 1) {
-                artista = partes[0].trim();
-                titulo = partes.slice(1).join("-").trim();
-            }
-
-            return {
-                titulo: titulo,
-                artista: artista,
-                capa: "assets/capa-default.jpg",
-                src: URL.createObjectURL(arquivo)
-            };
-        });
-
-        musicas = musicasLocais;
-        mostrarMusicas(musicas);
     };
 }
