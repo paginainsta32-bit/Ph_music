@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>PH MUSIC</title>
+
+<link rel="stylesheet" href="style.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="manifest" href="manifest.json">
+
+<meta name="theme-color" content="#00ff66">
+
+</head>
+
+<body>
+
+<div id="app">
+
+    <!-- MENU LATERAL -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <span>🎵</span>
+
+            <h1>PH MUSIC</h1>
+
+        </div>
+
+        <nav>
+
+            <button class="menu active">
+
+                🏠 Início
+
+            </button>
+
+            <button class="menu">
+
+                🎤 Artistas
+
+            </button>
+
+            <button class="menu">
+
+                💿 Álbuns
+
+            </button>
+
+            <button class="menu">
+
+                ❤️ Favoritas
+
+            </button>
+
+        </nav>
+
+    </aside>
+
+    <!-- CONTEÚDO -->
+
+    <main>
+
+        <header>
+
+            <input
+                id="search"
+                type="text"
+                placeholder="Pesquisar músicas..."
+            >
+
+        </header>
+
+        <section class="banner">
+
+            <div>
+
+                <h2>Bem-vindo ao PH MUSIC</h2>
+
+                <p>Sua biblioteca musical pessoal.</p>
+
+            </div>
+
+        </section>
+
+        <section>
+
+            <h2 class="titulo">Todas as músicas</h2>
+
+            <div id="lista-musicas" class="lista">
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- PLAYER -->
+
+<footer class="player">
+
+    <div id="info">
+
+        Nenhuma música selecionada
+
+    </div>
+
+    <audio id="audio" controls></audio>
+
+</footer>
+
+<script src="config.js"></script>
+
+<script src="api.js"></script>
+
+<script src="player.js"></script>
+
+<script src="app.js"></script>
+
+</body>
+
+</html>
