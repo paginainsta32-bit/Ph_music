@@ -1,5 +1,7 @@
-window.onload = () => {
-    carregarMusicas();
+window.onload = function() {
+    if (typeof carregarMusicas === 'function') {
+        carregarMusicas();
+    }
 };
 
 function mostrarMusicas(lista) {
@@ -12,7 +14,6 @@ function mostrarMusicas(lista) {
         const card = document.createElement("div");
         card.className = "card";
 
-        // Exibe a capa do Deezer ou a imagem padrão
         const imagemCapa = musica.capa || "assets/capa-default.jpg";[cite: 1]
 
         card.innerHTML = `
@@ -23,7 +24,7 @@ function mostrarMusicas(lista) {
             </div>
         `;
 
-        card.onclick = () => {
+        card.onclick = function() {
             if (typeof tocarMusica === 'function') {
                 tocarMusica(index);
             }
