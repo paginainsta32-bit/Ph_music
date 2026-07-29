@@ -1,6 +1,6 @@
 let musicas = [];
 
-// Busca capas no Deezer via JSONP (sem problemas de CORS no GitHub Pages)
+// Função que busca capas no Deezer via JSONP (sem bloqueio de CORS/Proxy)
 function buscarCapaDeezer(termo, callback) {
     if (!termo) return;
     const script = document.createElement('script');
@@ -35,6 +35,7 @@ async function carregarMusicas() {
         }
 
         const dadosBrutos = await resposta.json();
+        console.log("Músicas recebidas da API:", dadosBrutos);
 
         if (!Array.isArray(dadosBrutos) || dadosBrutos.length === 0) {
             const listaEl = document.getElementById("lista-musicas");
@@ -48,7 +49,7 @@ async function carregarMusicas() {
             return;
         }
 
-        // 1. Mapeia e renderiza as músicas usando os dados originais do R2/API
+        // 1. Prepara a lista com os dados do R2 imediatamente
         musicas = dadosBrutos.map(item => ({
             ...item,
             titulo: item.titulo || item.nome || item.title || "Sem Título",
@@ -56,6 +57,7 @@ async function carregarMusicas() {
             capa: item.capa || item.cover || "assets/capa-default.jpg"[cite: 1]
         }));
 
+        // Renderiza no HTML instantaneamente
         if (typeof mostrarMusicas === 'function') {
             mostrarMusicas(musicas);
         }
