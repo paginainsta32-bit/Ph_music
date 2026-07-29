@@ -1,6 +1,5 @@
 let musicas = [];
 
-// Função que busca capas no Deezer via JSONP (sem bloqueio de CORS/Proxy)
 function buscarCapaDeezer(termo, callback) {
     if (!termo) return;
     const script = document.createElement('script');
@@ -35,21 +34,16 @@ async function carregarMusicas() {
         }
 
         const dadosBrutos = await resposta.json();
-        console.log("Músicas recebidas da API:", dadosBrutos);
+        console.log("Músicas recebidas:", dadosBrutos);
 
         if (!Array.isArray(dadosBrutos) || dadosBrutos.length === 0) {
             const listaEl = document.getElementById("lista-musicas");
             if (listaEl) {
-                listaEl.innerHTML = `
-                    <div style="padding:30px;color:#e6c200">
-                        Nenhuma música encontrada no catálogo.
-                    </div>
-                `;
+                listaEl.innerHTML = `<div style="padding:30px;color:#e6c200">Nenhuma música encontrada.</div>`;
             }
             return;
         }
 
-        // 1. Prepara a lista com os dados do R2 imediatamente
         musicas = dadosBrutos.map(item => ({
             ...item,
             titulo: item.titulo || item.nome || item.title || "Sem Título",
@@ -57,12 +51,10 @@ async function carregarMusicas() {
             capa: item.capa || item.cover || "assets/capa-default.jpg"[cite: 1]
         }));
 
-        // Renderiza no HTML instantaneamente
         if (typeof mostrarMusicas === 'function') {
             mostrarMusicas(musicas);
         }
 
-        // 2. Busca as capas reais no Deezer em background
         musicas.forEach((musica, index) => {
             const termo = `${musica.titulo} ${musica.artista}`.trim();
             buscarCapaDeezer(termo, (dadosDeezer) => {
@@ -77,14 +69,9 @@ async function carregarMusicas() {
 
     } catch (erro) {
         console.error("Erro em carregarMusicas:", erro);
-
         const container = document.getElementById("lista-musicas");
         if (container) {
-            container.innerHTML = `
-                <div style="padding:30px;color:#ff4444">
-                    <strong>Erro ao carregar músicas:</strong> ${erro.message}
-                </div>
-            `;
+            container.innerHTML = `<div style="padding:30px;color:#ff4444"><strong>Erro ao carregar músicas:</strong> ${erro.message}</div>`;
         }
     }
 }
