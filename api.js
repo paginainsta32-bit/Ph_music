@@ -1,34 +1,36 @@
 let musicas = [];
 
 /**
- * Busca metadados de uma faixa no Deezer
+ * Busca metadados de uma faixa no Deezer de forma segura
  * @param {string} query - Nome da música e/ou artista
  */
 async function buscarMetadadosDeezer(query) {
+    if (!query) return null;
     try {
-        const url = `https://api.deezer.com/search?q=${encodeURIComponent(query)}`;
-        // Uso de proxy CORS para evitar bloqueios de requisição no navegador
-        const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+        // Deezer API através de proxy AllOrigins (mais estável para CORS)
+        const targetUrl = `https://api.deezer.com/search?q=${encodeURIComponent(query)}`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
         
-        if (!response.ok) throw new Error('Erro ao buscar no Deezer');
+        const response = await fetch(proxyUrl);
+        if (!response.ok) return null;
         
-        const data = await response.json();
+        const wrapper = await response.json();
+        const data = JSON.parse(wrapper.contents);
         
-        if (data.data && data.data.length > 0) {
-            const faixa = data.data[0]; // Pega o primeiro resultado mais relevante
+        if (data && data.data && data.data.length > 0) {
+            const faixa = data.data[0];
             return {
                 titulo: faixa.title,
                 artista: faixa.artist.name,
                 album: faixa.album.title,
-                capa: faixa.album.cover_medium,      // ~250x250px
-                capaGrande: faixa.album.cover_xl,  // ~1000x1000px
-                fotoArtista: faixa.artist.picture_medium
+                capa: faixa.album.cover_medium,
+                capaGrande: faixa.album.cover_xl
             };
         }
         return null;
     } catch (error) {
-        console.error("Erro ao integrar com Deezer para query:", query, error);
-        return null;
+        console.warn("Falha ao buscar no Deezer para:", query);
+        return null; // Retorna null para usar os dados locais/padrão sem quebrar a lista
     }
 }
 
@@ -37,35 +39,44 @@ async function carregarMusicas() {
         const resposta = await fetch(CONFIG.API_URL);
 
         if (!resposta.ok) {
-            throw new Error("Erro ao acessar a API");
+            throw new Error("Erro ao acessar a API principal");
         }
 
         const dadosBrutos = await resposta.json();
 
-        // Processa todas as faixas trazendo as capas/metadados do Deezer em paralelo
+        // Processa as músicas garantindo que uma falha no Deezer NÃO quebre o carregamento
         musicas = await Promise.all(
             dadosBrutos.map(async (item) => {
-                // Monta o termo de busca combinando o título e artista vindo do R2/API
-                const termoBusca = `${item.titulo || ''} ${item.artista || ''}`.trim();
-                
-                const metaDeezer = termoBusca ? await buscarMetadadosDeezer(termoBusca) : null;
+                try {
+                    const termoBusca = `${item.titulo || ''} ${item.artista || ''}`.trim();
+                    const metaDeezer = await buscarMetadadosDeezer(termoBusca);
 
-                return {
-                    ...item, // Mantém a URL do seu R2 e demais propriedades originais
-                    titulo: metaDeezer?.titulo || item.titulo || "Sem Título",
-                    artista: metaDeezer?.artista || item.artista || "Artista Desconhecido",
-                    album: metaDeezer?.album || item.album || "",
-                    capa: metaDeezer?.capa || item.capa || "assets/capa-default.jpg"[cite: 1]
-                };
+                    return {
+                        ...item,
+                        titulo: metaDeezer?.titulo || item.titulo || "Sem Título",
+                        artista: metaDeezer?.artista || item.artista || "Artista Desconhecido",
+                        album: metaDeezer?.album || item.album || "",
+                        capa: metaDeezer?.capa || item.capa || "assets/capa-default.jpg"[cite: 1]
+                    };
+                } catch (e) {
+                    // Fallback de segurança se o item der erro
+                    return {
+                        ...item,
+                        titulo: item.titulo || "Sem Título",
+                        artista: item.artista || "Artista Desconhecido",
+                        capa: item.capa || "assets/capa-default.jpg"[cite: 1]
+                    };
+                }
             })
         );
 
-        console.log("Músicas carregadas com metadados do Deezer:", musicas);
+        console.log("Músicas carregadas com sucesso:", musicas);
 
+        // Renderiza as músicas na tela
         mostrarMusicas(musicas);
 
     } catch (erro) {
-        console.error(erro);
+        console.error("Erro crítico:", erro);
 
         document.getElementById("lista-musicas").innerHTML = `
             <div style="padding:30px;color:#ff4444">
