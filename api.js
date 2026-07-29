@@ -1,6 +1,6 @@
 let musicas = [];
 
-// Função simplificada e direta para o Deezer (usando JSONP para evitar bloqueios de CORS/HTTPS)
+// Função auxiliar para buscar capas no Deezer via JSONP (evita bloqueio de CORS no GitHub Pages)
 function buscarCapaDeezer(termo, callback) {
     if (!termo) return;
     const script = document.createElement('script');
@@ -11,7 +11,9 @@ function buscarCapaDeezer(termo, callback) {
             callback(data.data[0]);
         }
         delete window[callbackName];
-        document.body.removeChild(script);
+        if (script.parentNode) {
+            script.parentNode.removeChild(script);
+        }
     };
 
     script.src = `https://api.deezer.com/search?q=${encodeURIComponent(termo)}&output=jsonp&callback=${callbackName}`;
@@ -23,7 +25,7 @@ async function carregarMusicas() {
     
     try {
         if (typeof CONFIG === 'undefined' || !CONFIG.API_URL) {
-            throw new Error("CONFIG.API_URL não está definida no arquivo config.js!");
+            throw new Error("CONFIG.API_URL não está definida!");
         }
 
         const resposta = await fetch(CONFIG.API_URL);
@@ -33,18 +35,21 @@ async function carregarMusicas() {
         }
 
         const dadosBrutos = await resposta.json();
-        console.log("Dados brutos recebidos da API:", dadosBrutos);
+        console.log("Músicas recebidas da API:", dadosBrutos);
 
         if (!Array.isArray(dadosBrutos) || dadosBrutos.length === 0) {
-            document.getElementById("lista-musicas").innerHTML = `
-                <div style="padding:30px;color:#e6c200">
-                    A API respondeu, mas a lista de músicas está vazia.
-                </div>
-            `;
+            const listaEl = document.getElementById("lista-musicas");
+            if (listaEl) {
+                listaEl.innerHTML = `
+                    <div style="padding:30px;color:#e6c200">
+                        Nenhuma música encontrada no catálogo.
+                    </div>
+                `;
+            }
             return;
         }
 
-        // Mapeia e garante valores padrão
+        // 1. Mapeia e renderiza as músicas usando seus dados do R2 imediatamente
         musicas = dadosBrutos.map(item => ({
             ...item,
             titulo: item.titulo || item.nome || item.title || "Sem Título",
@@ -52,19 +57,19 @@ async function carregarMusicas() {
             capa: item.capa || item.cover || "assets/capa-default.jpg"[cite: 1]
         }));
 
-        // Renderiza a lista original IMEDIATAMENTE
-        mostrarMusicas(musicas);
+        if (typeof mostrarMusicas === 'function') {
+            mostrarMusicas(musicas);
+        }
 
-        // Atualiza as capas pelo Deezer via JSONP (sem bloqueio de CORS)
+        // 2. Busca as capas reais no Deezer em background sem travar a lista
         musicas.forEach((musica, index) => {
             const termo = `${musica.titulo} ${musica.artista}`.trim();
             buscarCapaDeezer(termo, (dadosDeezer) => {
                 if (dadosDeezer && dadosDeezer.album && dadosDeezer.album.cover_medium) {
                     musicas[index].capa = dadosDeezer.album.cover_medium;
-                    musicas[index].titulo = dadosDeezer.title;
-                    musicas[index].artista = dadosDeezer.artist.name;
-                    // Re-renderiza a lista atualizada
-                    mostrarMusicas(musicas);
+                    if (typeof mostrarMusicas === 'function') {
+                        mostrarMusicas(musicas);
+                    }
                 }
             });
         });
@@ -76,7 +81,7 @@ async function carregarMusicas() {
         if (container) {
             container.innerHTML = `
                 <div style="padding:30px;color:#ff4444">
-                    <strong>Erro ao carregar:</strong> ${erro.message}
+                    <strong>Erro ao carregar músicas:</strong> ${erro.message}
                 </div>
             `;
         }
