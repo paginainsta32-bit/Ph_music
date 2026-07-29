@@ -12,7 +12,7 @@ function mostrarMusicas(lista) {
         const card = document.createElement("div");
         card.className = "card";
 
-        // Usa a capa do Deezer se existir; senão usa a capa padrão[cite: 1]
+        // Exibe a capa do Deezer ou a imagem padrão
         const imagemCapa = musica.capa || "assets/capa-default.jpg";[cite: 1]
 
         card.innerHTML = `
