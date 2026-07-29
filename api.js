@@ -1,6 +1,6 @@
 let musicas = [];
 
-// Função auxiliar para buscar capas no Deezer via JSONP (evita bloqueio de CORS no GitHub Pages)
+// Busca capas no Deezer usando JSONP (sem problemas de CORS no GitHub Pages)
 function buscarCapaDeezer(termo, callback) {
     if (!termo) return;
     const script = document.createElement('script');
@@ -25,7 +25,7 @@ async function carregarMusicas() {
     
     try {
         if (typeof CONFIG === 'undefined' || !CONFIG.API_URL) {
-            throw new Error("CONFIG.API_URL não está definida!");
+            throw new Error("CONFIG.API_URL não definida em config.js!");
         }
 
         const resposta = await fetch(CONFIG.API_URL);
@@ -35,7 +35,7 @@ async function carregarMusicas() {
         }
 
         const dadosBrutos = await resposta.json();
-        console.log("Músicas recebidas da API:", dadosBrutos);
+        console.log("Músicas recebidas:", dadosBrutos);
 
         if (!Array.isArray(dadosBrutos) || dadosBrutos.length === 0) {
             const listaEl = document.getElementById("lista-musicas");
@@ -49,7 +49,7 @@ async function carregarMusicas() {
             return;
         }
 
-        // 1. Mapeia e renderiza as músicas usando seus dados do R2 imediatamente
+        // 1. Mapeia as músicas usando os dados originais do R2/API
         musicas = dadosBrutos.map(item => ({
             ...item,
             titulo: item.titulo || item.nome || item.title || "Sem Título",
@@ -57,11 +57,12 @@ async function carregarMusicas() {
             capa: item.capa || item.cover || "assets/capa-default.jpg"[cite: 1]
         }));
 
+        // Renderiza na tela imediatamente
         if (typeof mostrarMusicas === 'function') {
             mostrarMusicas(musicas);
         }
 
-        // 2. Busca as capas reais no Deezer em background sem travar a lista
+        // 2. Atualiza as capas em background via Deezer
         musicas.forEach((musica, index) => {
             const termo = `${musica.titulo} ${musica.artista}`.trim();
             buscarCapaDeezer(termo, (dadosDeezer) => {
@@ -75,7 +76,7 @@ async function carregarMusicas() {
         });
 
     } catch (erro) {
-        console.error("Erro em carregarMusicas:", erro);
+        console.error("Erro ao carregar:", erro);
 
         const container = document.getElementById("lista-musicas");
         if (container) {
