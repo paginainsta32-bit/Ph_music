@@ -13,7 +13,7 @@ function mostrarMusicas(lista) {
         const card = document.createElement("div");
         card.className = "card";
 
-        const imagemCapa = musica.capa || "assets/capa-default.jpg";[cite: 1]
+        const imagemCapa = musica.capa || "assets/capa-default.jpg";
 
         card.innerHTML = `
             <img src="${imagemCapa}" alt="${musica.titulo}">
@@ -76,7 +76,7 @@ function configurarLeitorDePasta() {
             return {
                 titulo: titulo,
                 artista: artista,
-                capa: "assets/capa-default.jpg",[cite: 1]
+                capa: "assets/capa-default.jpg",
                 src: URL.createObjectURL(arquivo)
             };
         });
