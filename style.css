@@ -1,4 +1,4 @@
-﻿*{
+*{
     margin:0;
     padding:0;
     box-sizing:border-box;
@@ -78,10 +78,13 @@ main{
 
 header{
     margin-bottom:25px;
+    display:flex;
+    gap:15px;
+    align-items:center;
 }
 
 header input{
-    width:100%;
+    flex:1;
     padding:16px;
     border:none;
     outline:none;
@@ -89,6 +92,26 @@ header input{
     background:#1d1d1d;
     color:white;
     font-size:16px;
+}
+
+/* ESTILO DO BOTÃO DE ABRIR PASTA */
+.btn-pasta{
+    background:#00ff66;
+    color:#000;
+    border:none;
+    outline:none;
+    padding:14px 22px;
+    border-radius:40px;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:.25s;
+}
+
+.btn-pasta:hover{
+    background:#00cc52;
+    transform:scale(1.02);
 }
 
 .banner{
@@ -184,49 +207,42 @@ header input{
 
 @media(max-width:900px){
 
-.sidebar{
+    .sidebar{
+        display:none;
+    }
 
-display:none;
+    header{
+        flex-direction:column;
+        align-items:stretch;
+    }
 
-}
+    .btn-pasta{
+        text-align:center;
+    }
 
-.player{
+    .player{
+        left:0;
+        height:120px;
+        flex-direction:column;
+        justify-content:center;
+        gap:10px;
+    }
 
-left:0;
+    #audio{
+        width:95%;
+    }
 
-height:120px;
+    main{
+        padding:20px;
+        padding-bottom:150px;
+    }
 
-flex-direction:column;
+    .banner{
+        height:180px;
+    }
 
-justify-content:center;
-
-gap:10px;
-
-}
-
-#audio{
-
-width:95%;
-
-}
-
-main{
-
-padding:20px;
-padding-bottom:150px;
-
-}
-
-.banner{
-
-height:180px;
-
-}
-
-.banner h2{
-
-font-size:30px;
-
-}
+    .banner h2{
+        font-size:30px;
+    }
 
 }
