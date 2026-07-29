@@ -1,43 +1,34 @@
-﻿window.onload = () => {
-
+window.onload = () => {
     carregarMusicas();
-
 };
 
-function mostrarMusicas(lista){
-
+function mostrarMusicas(lista) {
     const container = document.getElementById("lista-musicas");
+    if (!container) return;
 
     container.innerHTML = "";
 
-    lista.forEach((musica,index)=>{
-
+    lista.forEach((musica, index) => {
         const card = document.createElement("div");
-
         card.className = "card";
 
+        // Usa a capa do Deezer se existir; senão usa a capa padrão[cite: 1]
+        const imagemCapa = musica.capa || "assets/capa-default.jpg";[cite: 1]
+
         card.innerHTML = `
-
-            <img src="assets/capa-default.jpg">
-
+            <img src="${imagemCapa}" alt="${musica.titulo}">
             <div class="card-info">
-
                 <h3>${musica.titulo}</h3>
-
                 <p>${musica.artista}</p>
-
             </div>
-
         `;
 
-        card.onclick = ()=>{
-
-            tocarMusica(index);
-
+        card.onclick = () => {
+            if (typeof tocarMusica === 'function') {
+                tocarMusica(index);
+            }
         };
 
         container.appendChild(card);
-
     });
-
 }
