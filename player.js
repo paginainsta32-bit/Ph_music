@@ -1,7 +1,7 @@
 // ===============================
 // ESTADO GLOBAL DO PLAYER
 // ===============================
-let indiceAtual = 0;
+window.indiceAtual = 0;
 
 // Web Audio API
 let audioCtx = null;
@@ -10,7 +10,6 @@ let filtroMedio = null;
 let filtroAgudo = null;
 let fonteAudio = null;
 
-// Elementos UI
 let barra = null;
 let tempoAtual = null;
 let tempoTotal = null;
@@ -85,7 +84,7 @@ function inicializarEqualizador(audioElement) {
       audioCtx.resume();
     }
   } catch (err) {
-    console.warn("Equalizador desativado por política CORS do navegador.");
+    console.warn("Equalizador desativado por política de segurança CORS.");
   }
 }
 
@@ -99,15 +98,20 @@ function configurarControlesEqualizador() {
   if (agudo) agudo.oninput = (e) => { if (filtroAgudo) filtroAgudo.gain.value = parseFloat(e.target.value); };
 }
 
-function tocarMusica(index) {
-  const listaMusicas = window.musicas || [];
-  if (!listaMusicas || listaMusicas.length === 0) return;
+// FUNÇÃO GLOBAL DE REPRODUÇÃO
+window.tocarMusica = function(index) {
+  const lista = window.musicas || [];
 
-  if (index >= listaMusicas.length) index = 0;
-  if (index < 0) index = listaMusicas.length - 1;
+  if (!lista || lista.length === 0) {
+    console.error("Nenhuma música carregada no player.");
+    return;
+  }
 
-  indiceAtual = index;
-  const faixa = listaMusicas[indiceAtual];
+  if (index >= lista.length) index = 0;
+  if (index < 0) index = lista.length - 1;
+
+  window.indiceAtual = index;
+  const faixa = lista[window.indiceAtual];
   const audioElement = document.getElementById("audio");
   const infoElement = document.getElementById("info");
 
@@ -115,17 +119,20 @@ function tocarMusica(index) {
   tempoAtual = document.getElementById("tempo-atual");
   tempoTotal = document.getElementById("tempo-total");
 
-  if (!audioElement) return;
-
-  const urlAudio = faixa ? (faixa.url || faixa.src || faixa.urlAudio) : null;
-  console.log("Tentando reproduzir:", urlAudio);
-
-  if (!urlAudio) {
-    console.error("URL de áudio inválida para a faixa:", faixa);
+  if (!audioElement) {
+    console.error("Elemento <audio id='audio'> não foi encontrado no HTML.");
     return;
   }
 
-  // Reseta a tag de áudio
+  const urlAudio = faixa ? (faixa.url || faixa.src || faixa.urlAudio) : null;
+  console.log("-> Tentando carregar o áudio na URL:", urlAudio);
+
+  if (!urlAudio) {
+    console.error("Faixa sem URL válida:", faixa);
+    return;
+  }
+
+  // ATRIBUIÇÃO DA URL E REPRODUÇÃO
   audioElement.pause();
   audioElement.src = urlAudio;
   audioElement.load();
@@ -136,24 +143,22 @@ function tocarMusica(index) {
 
   configurarEventosPlayer(audioElement);
 
-  // Tenta conectar o equalizador sem quebrar a reprodução caso falhe
   try {
     inicializarEqualizador(audioElement);
   } catch(e) {}
 
-  // Toca a música
   const playPromise = audioElement.play();
   if (playPromise !== undefined) {
     playPromise.catch((err) => {
-      console.warn("Clique necessário para iniciar o áudio:", err);
+      console.warn("Aguardando ação do usuário para liberar áudio:", err);
     });
   }
-}
+};
 
-function proximaMusica() { tocarMusica(indiceAtual + 1); }
-function musicaAnterior() { tocarMusica(indiceAtual - 1); }
+window.proximaMusica = function() { window.tocarMusica(window.indiceAtual + 1); };
+window.musicaAnterior = function() { window.tocarMusica(window.indiceAtual - 1); };
 
-function playPause() {
+window.playPause = function() {
   const audio = document.getElementById("audio");
   if (!audio) return;
   if (audio.paused) {
@@ -162,10 +167,10 @@ function playPause() {
   } else {
     audio.pause();
   }
-}
+};
 
 document.addEventListener("click", () => {
   if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
 });
 
-console.log("PH MUSIC Player carregado com sucesso.");
+console.log("PH MUSIC Player v2.0 montado com sucesso.");
