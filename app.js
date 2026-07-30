@@ -79,7 +79,7 @@ function mostrarMusicas(lista) {
   listaAtual = lista;
   window.musicas = listaAtual;
 
-  const container = obterContainerLista();
+  const container = document.getElementById("lista-musicas") || document.querySelector(".lista");
   if (!container) return;
 
   container.innerHTML = "";
@@ -99,16 +99,15 @@ function mostrarMusicas(lista) {
       </div>
     `;
 
-    card.onclick = (e) => {
-      e.preventDefault();
-      console.log("Clique detectado na faixa:", musica.titulo, "| URL:", musica.url);
-      
-      window.musicas = listaAtual;
-
-      if (typeof tocarMusica === "function") {
-        tocarMusica(index);
+    // DISPARO DIRETO E GARANTIDO
+    card.addEventListener("click", () => {
+      console.log("Clicou no card:", musica.titulo);
+      if (typeof window.tocarMusica === "function") {
+        window.tocarMusica(index);
+      } else {
+        console.error("window.tocarMusica não está disponível!");
       }
-    };
+    });
 
     container.appendChild(card);
   });
