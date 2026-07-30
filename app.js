@@ -1,5 +1,5 @@
 let musicas = [];
-let listaAtual = []; // Guarda a lista que está sendo exibida no momento
+let listaAtual = [];
 let emModoPastas = false;
 
 window.onload = () => {
@@ -8,7 +8,7 @@ window.onload = () => {
   configurarBusca();
 };
 
-// Busca as músicas na sua API/R2
+// Busca as músicas na sua API (Cloudflare Worker)
 async function carregarMusicas() {
   console.log("Iniciando busca de músicas...");
 
@@ -26,50 +26,64 @@ async function carregarMusicas() {
     const dadosBrutos = await resposta.json();
 
     if (!Array.isArray(dadosBrutos) || dadosBrutos.length === 0) {
-      const container = document.getElementById("lista-musicas");
+      const container = obterContainerLista();
       if (container) {
         container.innerHTML = `<div style="padding:30px;color:#e6c200">Nenhuma música encontrada no catálogo.</div>`;
       }
       return;
     }
 
-    // Mapeia os dados da API garantindo os campos necessários
-    musicas = dadosBrutos.map((item) => ({
-      ...item,
-      titulo: item.titulo || item.nome || item.title || "Sem Título",
-      artista: item.artista || item.artist || "Artista Desconhecido",
-      pasta: item.pasta || item.categoria || item.genero || item.artista || "Outros",
-      capa: item.capa || item.cover || "assets/capa-default.jpg",
-      // Garante que a propriedade URL/src exista para o player tocar
-      url: item.url || item.src || item.urlAudio,
-    }));
+    // Mapeia e garante que o campo url exista
+    musicas = dadosBrutos.map((item) => {
+      const link = item.url || item.src || item.urlAudio;
+      return {
+        ...item,
+        titulo: item.titulo || item.nome || item.title || "Sem Título",
+        artista: item.artista || item.artist || "Artista Desconhecido",
+        pasta: item.pasta || item.categoria || item.genero || item.artista || "Outros",
+        capa: item.capa || item.cover || "assets/capa-default.jpg",
+        url: link,
+        src: link,
+        urlAudio: link
+      };
+    });
 
-    // Sincroniza a variável global que o player.js consome
+    // Torna a playlist acessível globalmente ao player.js
     window.musicas = musicas;
 
     mostrarMusicas(musicas);
   } catch (erro) {
     console.error("Erro em carregarMusicas:", erro);
-    const container = document.getElementById("lista-musicas");
+    const container = obterContainerLista();
     if (container) {
       container.innerHTML = `<div style="padding:30px;color:#ff4444">Não foi possível carregar as músicas online.</div>`;
     }
   }
 }
 
-// Renderiza a lista de músicas
+// Função auxiliar para encontrar a div correta na tela
+function obterContainerLista() {
+  return document.getElementById("lista-musicas") || document.querySelector(".lista");
+}
+
+// Renderiza a lista de músicas e atribui o evento de clique para tocar
 function mostrarMusicas(lista) {
   emModoPastas = false;
   listaAtual = lista;
+  window.musicas = listaAtual; // Sincroniza playlist ativa
 
-  const container = document.getElementById("lista-musicas");
-  if (!container) return;
+  const container = obterContainerLista();
+  if (!container) {
+    console.error("Não foi encontrada nenhuma div com id='lista-musicas' ou class='lista' no HTML.");
+    return;
+  }
 
   container.innerHTML = "";
 
   lista.forEach((musica, index) => {
     const card = document.createElement("div");
     card.className = "card";
+    card.style.cursor = "pointer";
 
     const imagemCapa = musica.capa || "assets/capa-default.jpg";
 
@@ -81,12 +95,17 @@ function mostrarMusicas(lista) {
       </div>
     `;
 
-    card.onclick = () => {
-      // Sincroniza a playlist ativa globalmente com a lista exibida na tela
+    // AÇÃO DE CLIQUE: Dispara a reprodução no player.js
+    card.onclick = (e) => {
+      e.preventDefault();
+      console.log("Clique detectado na faixa:", musica.titulo, "Índice:", index);
+      
       window.musicas = listaAtual;
 
       if (typeof tocarMusica === "function") {
         tocarMusica(index);
+      } else {
+        console.error("A função tocarMusica() não foi carregada pelo player.js.");
       }
     };
 
@@ -94,15 +113,14 @@ function mostrarMusicas(lista) {
   });
 }
 
-// Agrupa as músicas por pasta e mostra na tela
+// Agrupa as músicas por pasta
 function mostrarPastas() {
   emModoPastas = true;
-  const container = document.getElementById("lista-musicas");
+  const container = obterContainerLista();
   if (!container) return;
 
   container.innerHTML = "";
 
-  // Agrupa as músicas pelos nomes das pastas
   const pastas = {};
   musicas.forEach((musica) => {
     const nomePasta = musica.pasta || "Geral";
@@ -112,11 +130,11 @@ function mostrarPastas() {
     pastas[nomePasta].push(musica);
   });
 
-  // Cria os cards visuais para cada pasta
   Object.keys(pastas).forEach((nomePasta) => {
     const qtd = pastas[nomePasta].length;
     const card = document.createElement("div");
     card.className = "card card-pasta";
+    card.style.cursor = "pointer";
 
     card.innerHTML = `
       <div style="height:200px; background:#1f1f1f; display:flex; align-items:center; justify-content:center; font-size:64px; border-bottom: 1px solid #333;">
@@ -138,9 +156,9 @@ function mostrarPastas() {
   });
 }
 
-// Configuração do botão "Ver por Pastas"
+// Botão Ver por Pastas
 function configurarBotaoPasta() {
-  const btnPasta = document.getElementById("btn-pasta");
+  const btnPasta = document.getElementById("btn-pasta") || document.querySelector(".btn-pasta");
   if (!btnPasta) return;
 
   btnPasta.onclick = () => {
@@ -154,7 +172,7 @@ function configurarBotaoPasta() {
   };
 }
 
-// Configuração da barra de pesquisa em tempo real
+// Barra de Pesquisa
 function configurarBusca() {
   const campoBusca = document.querySelector("header input");
   if (!campoBusca) return;
