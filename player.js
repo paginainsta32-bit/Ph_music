@@ -24,16 +24,22 @@ let tempoTotal = null;
  * @param {number} index - Índice da música na lista `musicas`.
  */
 function tocarMusica(index) {
-  if (!window.musicas || musicas.length === 0) return;
+  // Sincroniza com o array global 'musicas' (gerado no app.js)
+  const listaMusicas = window.musicas || [];
 
-  // Trata loop da playlist
-  if (index >= musicas.length) index = 0;
-  if (index < 0) index = musicas.length - 1;
+  if (!listaMusicas || listaMusicas.length === 0) {
+    console.warn("Nenhuma playlist encontrada para reprodução.");
+    return;
+  }
+
+  // Trata o loop da playlist
+  if (index >= listaMusicas.length) index = 0;
+  if (index < 0) index = listaMusicas.length - 1;
 
   indiceAtual = index;
-  const faixa = musicas[indiceAtual];
+  const faixa = listaMusicas[indiceAtual];
 
-  // Captura de elementos da DOM
+  // Captura dos elementos na DOM
   const audioElement = document.getElementById("audio");
   const infoElement = document.getElementById("info");
 
@@ -41,27 +47,41 @@ function tocarMusica(index) {
   tempoAtual = document.getElementById("tempo-atual");
   tempoTotal = document.getElementById("tempo-total");
 
-  if (!audioElement) return;
-
-  // Configurações da tag de áudio
-  audioElement.crossOrigin = "anonymous";
-  audioElement.preload = "metadata";
-
-  const urlAudio = faixa.url || faixa.src || faixa.urlAudio;
-  audioElement.src = urlAudio;
-
-  // Atualiza informações na tela
-  if (infoElement) {
-    infoElement.innerHTML = `<strong>${faixa.titulo}</strong><br>${faixa.artista}`;
+  if (!audioElement) {
+    console.error("Elemento <audio id='audio'> não foi encontrado no HTML.");
+    return;
   }
 
-  // Inicializa eventos do player e do áudio
+  // Obtém a URL do áudio testando os fallbacks possíveis
+  const urlAudio = faixa ? (faixa.url || faixa.src || faixa.urlAudio) : null;
+
+  // Validação essencial: Evita o erro "NotSupportedError / No supported source found"
+  if (!urlAudio || typeof urlAudio !== "string") {
+    console.error("URL de áudio inválida ou inexistente para a faixa:", faixa);
+    return;
+  }
+
+  // Reseta o player antes de carregar a nova fonte
+  audioElement.pause();
+  audioElement.removeAttribute("src");
+
+  // Configurações do elemento de áudio
+  audioElement.crossOrigin = "anonymous";
+  audioElement.preload = "metadata";
+  audioElement.src = urlAudio;
+
+  // Atualiza as informações exibidas na interface
+  if (infoElement) {
+    infoElement.innerHTML = `<strong>${faixa.titulo || 'Sem Título'}</strong><br>${faixa.artista || 'Artista Desconhecido'}`;
+  }
+
+  // Configura listeners e equalizador
   configurarEventosPlayer(audioElement);
   inicializarEqualizador(audioElement);
 
-  // Executa a reprodução
+  // Inicia a reprodução
   audioElement.play().catch((err) => {
-    console.warn("Erro ao tentar reproduzir o áudio:", err);
+    console.warn("Erro de autoplay ou fonte de mídia não suportada:", err);
   });
 }
 
@@ -78,7 +98,7 @@ function musicaAnterior() {
 // ===============================
 
 function configurarEventosPlayer(audioElement) {
-  // Evita adicionar múltiplos event listeners no mesmo elemento de áudio
+  // Evita adicionar múltiplos listeners no mesmo elemento <audio>
   if (audioElement.dataset.playerConfigurado) return;
   audioElement.dataset.playerConfigurado = "true";
 
@@ -102,12 +122,12 @@ function configurarEventosPlayer(audioElement) {
     }
   });
 
-  // Fim da faixa -> Avança para a próxima
+  // Fim da faixa -> Avança para a próxima música
   audioElement.addEventListener("ended", () => {
     proximaMusica();
   });
 
-  // Interação do usuário com a barra de progresso
+  // Interação do usuário arrastando a barra de progresso
   if (barra) {
     barra.oninput = () => {
       audioElement.currentTime = barra.value;
@@ -123,12 +143,12 @@ function inicializarEqualizador(audioElement) {
   if (!audioElement) return;
 
   try {
-    // Garante que o AudioContext seja criado apenas UMA vez
+    // Inicializa o AudioContext uma única vez
     if (!audioCtx) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContextClass();
 
-      // Fonte de áudio conectada ao elemento HTML <audio>
+      // Cria a fonte ligada ao <audio>
       fonteAudio = audioCtx.createMediaElementSource(audioElement);
 
       // Filtro GRAVE (Low Shelf)
@@ -150,17 +170,17 @@ function inicializarEqualizador(audioElement) {
       filtroAgudo.frequency.value = 5500;
       filtroAgudo.gain.value = 0;
 
-      // Encadeamento do áudio: Fonte -> Grave -> Médio -> Agudo -> Saída
+      // Cadeia de conexão de áudio: Fonte -> Grave -> Médio -> Agudo -> Saída (Auto-falantes)
       fonteAudio.connect(filtroGrave);
       filtroGrave.connect(filtroMedio);
       filtroMedio.connect(filtroAgudo);
       filtroAgudo.connect(audioCtx.destination);
 
-      // Event listeners para os sliders do equalizador
+      // Vincula os controles deslizantes do HTML
       configurarControlesEqualizador();
     }
 
-    // Se o contexto estiver suspenso (política dos navegadores), retoma a execução
+    // Se o navegador colocou o contexto em espera (suspend), reativa
     if (audioCtx.state === "suspended") {
       audioCtx.resume();
     }
@@ -176,19 +196,19 @@ function configurarControlesEqualizador() {
 
   if (grave) {
     grave.addEventListener("input", (e) => {
-      filtroGrave.gain.value = parseFloat(e.target.value);
+      if (filtroGrave) filtroGrave.gain.value = parseFloat(e.target.value);
     });
   }
 
   if (medio) {
     medio.addEventListener("input", (e) => {
-      filtroMedio.gain.value = parseFloat(e.target.value);
+      if (filtroMedio) filtroMedio.gain.value = parseFloat(e.target.value);
     });
   }
 
   if (agudo) {
     agudo.addEventListener("input", (e) => {
-      filtroAgudo.gain.value = parseFloat(e.target.value);
+      if (filtroAgudo) filtroAgudo.gain.value = parseFloat(e.target.value);
     });
   }
 }
@@ -205,7 +225,7 @@ function playPause() {
     if (audioCtx && audioCtx.state === "suspended") {
       audioCtx.resume();
     }
-    audio.play();
+    audio.play().catch(err => console.warn(err));
   } else {
     audio.pause();
   }
@@ -252,7 +272,7 @@ function mutar() {
 // ===============================
 
 function formatarTempo(segundos) {
-  if (isNaN(segundos)) return "0:00";
+  if (isNaN(segundos) || !isFinite(segundos)) return "0:00";
 
   const m = Math.floor(segundos / 60);
   const s = Math.floor(segundos % 60);
@@ -265,8 +285,7 @@ function formatarTempo(segundos) {
 // ===============================
 
 document.addEventListener("keydown", (e) => {
-
-  // Evita acionar atalhos caso o usuário esteja digitando em um campo de texto/busca
+  // Ignora os atalhos se o usuário estiver digitando na caixa de texto
   if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
     return;
   }
@@ -298,15 +317,13 @@ document.addEventListener("keydown", (e) => {
     case "KeyM":
       mutar();
       break;
-
   }
 });
 
 // ===============================
-// AUTOPLAY POLICY FIX
+// ATIVAÇÃO DO CONTEXTO DE ÁUDIO
 // ===============================
 
-// Mantém o AudioContext ativo após a primeira interação do usuário na página
 document.addEventListener("click", () => {
   if (audioCtx && audioCtx.state === "suspended") {
     audioCtx.resume();
