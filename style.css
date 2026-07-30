@@ -1,260 +1,350 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Montserrat',sans-serif;
+/* ==========================================================================
+   RESET E ESTILOS BASE
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Montserrat', sans-serif;
 }
 
-body{
-    background:#0b0b0b;
-    color:#fff;
-    overflow:hidden;
+body {
+  background-color: #121212;
+  color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
 }
 
-#app{
-    display:flex;
-    height:100vh;
+#app {
+  display: flex;
+  flex: 1;
+  padding-bottom: 90px; /* Espaço para o player não cobrir os cards */
 }
 
-/* MENU */
-
-.sidebar{
-    width:240px;
-    background:#111;
-    border-right:1px solid #222;
-    padding:25px;
+/* ==========================================================================
+   SIDEBAR (MENU LATERAL)
+   ========================================================================== */
+.sidebar {
+  width: 240px;
+  background-color: #000000;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: transform 0.3s ease;
+  z-index: 99;
 }
 
-.logo{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:40px;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #00ff66;
 }
 
-.logo span{
-    font-size:32px;
+.logo h1 {
+  font-size: 1.2rem;
+  font-weight: 800;
 }
 
-.logo h1{
-    color:#00ff66;
-    font-size:24px;
-    font-weight:800;
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-nav{
-    display:flex;
-    flex-direction:column;
-    gap:12px;
+.menu {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  padding: 12px 15px;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.menu{
-    background:none;
-    border:none;
-    color:#bbb;
-    text-align:left;
-    padding:14px;
-    border-radius:12px;
-    cursor:pointer;
-    font-size:15px;
-    transition:.25s;
+.menu:hover, .menu.active {
+  color: #ffffff;
+  background-color: #282828;
 }
 
-.menu:hover,
-.menu.active{
-    background:#00ff66;
-    color:#000;
-    font-weight:bold;
+.menu.active {
+  color: #00ff66;
 }
 
-/* CONTEÚDO */
-
-main{
-    flex:1;
-    overflow:auto;
-    padding:30px;
-    padding-bottom:120px;
+.btn-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #00ff66;
+  font-size: 1.8rem;
+  cursor: pointer;
+  margin-right: 10px;
 }
 
-header{
-    margin-bottom:25px;
-}
-
-header input{
-    width:100%;
-    padding:16px;
-    border:none;
-    outline:none;
-    border-radius:40px;
-    background:#1d1d1d;
-    color:white;
-    font-size:16px;
-}
-
-.banner{
-    height:220px;
-    border-radius:20px;
-    background:linear-gradient(135deg,#00ff66,#008844);
-    display:flex;
-    align-items:center;
-    padding:40px;
-    margin-bottom:35px;
-}
-
-.banner h2{
-    font-size:42px;
-}
-
-.banner p{
-    margin-top:10px;
-    font-size:18px;
-}
-
-.titulo{
-    margin-bottom:20px;
-}
-
-/* LISTA */
-
-.lista{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
-    gap:20px;
-}
-
-.card{
-    background:#181818;
-    border-radius:18px;
-    overflow:hidden;
-    cursor:pointer;
-    transition:.3s;
-}
-
-.card:hover{
-    transform:translateY(-6px);
-    background:#242424;
-}
-
-.card img{
-    width:100%;
-    height:230px;
-    object-fit:cover;
-}
-
-.card-info{
-    padding:15px;
-}
-
-.card-info h3{
-    font-size:16px;
-    margin-bottom:6px;
-}
-
-.card-info p{
-    color:#9d9d9d;
-    font-size:14px;
-}
-
-/* PLAYER */
-
-.player{
-    position:fixed;
-    bottom:0;
-    left:240px;
-    right:0;
-    height:90px;
-    background:#111;
-    border-top:1px solid #222;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:15px 30px;
-}
-
-#audio{
-    width:420px;
-}
-
-#info{
-    font-weight:600;
-    color:#00ff66;
-}
-
-/* RESPONSIVO */
-
-@media(max-width:900px){
-
-.sidebar{
-
-display:none;
-
-}
-
-.player{
-
-left:0;
-
-height:120px;
-
-flex-direction:column;
-
-justify-content:center;
-
-gap:10px;
-
-}
-
-#audio{
-
-width:95%;
-
-}
-
-main{
-
-padding:20px;
-padding-bottom:150px;
-
-}
-
-.banner{
-
-height:180px;
-
-}
-
-.banner h2{
-
-font-size:30px;
-
-}
-/* MODAL NAVEGADOR DE PASTAS */
-.modal-overlay {
+.sidebar-overlay {
+  display: none;
   position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.8);
-  display: flex; justify-content: center; align-items: center;
-  z-index: 1000;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 98;
 }
-.modal-overlay.hidden { display: none; }
-.modal-content {
-  background: #181818; border-radius: 12px; width: 90%; max-width: 500px;
-  padding: 20px; color: #fff; max-height: 80vh; display: flex; flex-direction: column;
+
+/* ==========================================================================
+   CONTEÚDO PRINCIPAL
+   ========================================================================== */
+main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
 }
-.modal-header { display: flex; justify-content: space-between; align-items: center; }
-.btn-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
-.caminho-atual { font-size: 12px; color: #00ff66; margin: 10px 0; word-break: break-all; }
-.lista-pastas { overflow-y: auto; flex: 1; margin-top: 100px; }
-.item-pasta, .item-arquivo { padding: 12px; border-bottom: 1px solid #282828; cursor: pointer; transition: 0.2s; }
-.item-pasta:hover { background: #282828; color: #00ff66; }
-.item-arquivo:hover { background: #282828; color: #1db954; }
 
-/* CONTROLES DO PLAYER & EQUALIZADOR */
-.player { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: #111; }
-.controles-midia { display: flex; align-items: center; gap: 10px; }
-.btn-ctrl { background: transparent; border: none; font-size: 20px; cursor: pointer; color: #fff; }
-.equalizador { display: flex; align-items: center; gap: 12px; font-size: 11px; }
-.eq-control { display: flex; flex-direction: column; align-items: center; }
-.eq-control input[type=range] { width: 60px; accent-color: #00ff66; }    
+header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
 
+#search {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: none;
+  background-color: #242424;
+  color: #fff;
+  outline: none;
+}
+
+.banner {
+  background: linear-gradient(135deg, #00ff66 0%, #008837 100%);
+  border-radius: 12px;
+  padding: 30px;
+  color: #000;
+  margin-bottom: 30px;
+}
+
+.banner h2 {
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.titulo {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+}
+
+/* LISTA DE CARDS */
+.lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background-color: #181818;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.card:hover {
+  background-color: #282828;
+}
+
+.card img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.card-info h3 {
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-info p {
+  font-size: 0.8rem;
+  color: #a7a7a7;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   PLAYER (RODAPÉ RESPONSIVO)
+   ========================================================================== */
+.player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 90px;
+  background-color: #000000;
+  border-top: 1px solid #282828;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 100;
+}
+
+.player-left {
+  width: 25%;
+  min-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.85rem;
+}
+
+.player-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.controles-midia {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  max-width: 500px;
+  justify-content: center;
+}
+
+.btn-ctrl {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+#audio {
+  width: 100%;
+  max-width: 350px;
+  height: 36px;
+}
+
+.player-right {
+  width: 25%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+}
+
+.btn-eq-toggle {
+  background: #282828;
+  border: 1px solid #00ff66;
+  color: #00ff66;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: none; /* Ativado no mobile */
+}
+
+.equalizador {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: #181818;
+  padding: 8px 15px;
+  border-radius: 8px;
+  border: 1px solid #282828;
+}
+
+.eq-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.7rem;
+  color: #b3b3b3;
+}
+
+.eq-control input[type="range"] {
+  width: 60px;
+  accent-color: #00ff66;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   MEDIA QUERIES (ADAPTAÇÃO PARA SMARTPHONES E TABLETS)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .btn-menu-toggle {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  .lista {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+
+  /* Ajustes no Player para telas pequenas */
+  .player {
+    height: auto;
+    padding: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .player-left {
+    width: 100%;
+    text-align: center;
+  }
+
+  .player-center {
+    width: 100%;
+  }
+
+  .player-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn-eq-toggle {
+    display: block;
+  }
+
+  .equalizador {
+    position: absolute;
+    bottom: 45px;
+    right: 50%;
+    transform: translateX(50%);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+  }
+
+  .equalizador.hidden-mobile {
+    display: none;
+  }
 }
