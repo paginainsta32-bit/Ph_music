@@ -15,9 +15,12 @@
 
 <body>
 
+  <!-- Overlay para fechar o menu no celular ao clicar fora -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
   <div id="app">
     <!-- MENU LATERAL -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="logo">
         <span>🎵</span>
         <h1>PH MUSIC</h1>
@@ -31,9 +34,11 @@
       </nav>
     </aside>
 
-    <!-- CONTEÚDO -->
+    <!-- CONTEÚDO PRINCIPAL -->
     <main>
       <header>
+        <!-- Botão Hamburguer para Mobile -->
+        <button id="btn-menu-toggle" class="btn-menu-toggle" aria-label="Abrir Menu">☰</button>
         <input id="search" type="text" placeholder="Pesquisar músicas...">
       </header>
 
@@ -44,7 +49,7 @@
         </div>
       </section>
 
-      <section>
+      <section class="secao-musicas">
         <h2 id="titulo-secao" class="titulo">Todas as músicas</h2>
         <div id="lista-musicas" class="lista"></div>
       </section>
@@ -63,7 +68,7 @@
     </div>
   </div>
 
-  <!-- PLAYER FOOTER -->
+  <!-- PLAYER FOOTER RESPONSIVO -->
   <footer class="player">
     <div class="player-left">
       <div id="info">Nenhuma música selecionada</div>
@@ -77,10 +82,10 @@
       </div>
     </div>
 
-    <!-- EQUALIZADOR -->
+    <!-- EQUALIZADOR INTEGRADO -->
     <div class="player-right">
-      <div class="equalizador">
-        <span class="eq-title">🎛️ EQ</span>
+      <button id="btn-toggle-eq" class="btn-eq-toggle">🎛️ EQ</button>
+      <div class="equalizador hidden-mobile" id="equalizador-box">
         <div class="eq-control">
           <label for="eq-grave">Grave</label>
           <input type="range" id="eq-grave" min="-12" max="12" value="0" step="0.5">
