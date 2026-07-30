@@ -66,6 +66,7 @@ function inicializarEqualizador(audioElement) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContextClass();
 
+      // Conecta o elemento de áudio à Web Audio API
       fonteAudio = audioCtx.createMediaElementSource(audioElement);
 
       filtroGrave = audioCtx.createBiquadFilter();
@@ -96,7 +97,7 @@ function inicializarEqualizador(audioElement) {
       audioCtx.resume();
     }
   } catch (err) {
-    console.warn("Equalizador desativado para garantir a reprodução do áudio:", err);
+    console.warn("Equalizador desativado para garantir compatibilidade de áudio.");
   }
 }
 
@@ -154,36 +155,32 @@ window.tocarMusica = function(index) {
 
   configurarEventosPlayer(audioElement);
 
-  // CONFIGURAÇÃO FUNDAMENTAL PARA CORS E STREAMING
+  // Garante a parada de reproduções anteriores
   audioElement.pause();
-  audioElement.crossOrigin = "anonymous"; // Obrigatorio para Web Audio API
+
+  // ATRIBUIÇÃO DA URL
   audioElement.src = urlAudio;
   audioElement.load();
 
-  if (audioCtx && audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
+  // TENTA REPRODUÇÃO DIRETA NATIVA
+  const tentarTocar = () => {
+    const playPromise = audioElement.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log("Áudio tocando perfeitamente!");
+          // Tenta ligar o equalizador em segundo plano após o som iniciar
+          try {
+            inicializarEqualizador(audioElement);
+          } catch(e) {}
+        })
+        .catch((err) => {
+          console.warn("Autoplay bloqueado pelo navegador. Clique no player para iniciar:", err);
+        });
+    }
+  };
 
-  // Tenta inicializar o equalizador
-  try {
-    inicializarEqualizador(audioElement);
-  } catch(e) {}
-
-  // DISPARO SEGURO DA REPRODUÇÃO
-  const playPromise = audioElement.play();
-  if (playPromise !== undefined) {
-    playPromise
-      .then(() => {
-        console.log("Áudio tocando perfeitamente!");
-      })
-      .catch((err) => {
-        console.warn("Erro ao iniciar áudio. Tentando modo de compatibilidade...", err);
-        // Fallback: se o navegador recusou o modo CORS, recarrega o elemento nativo
-        audioElement.removeAttribute("crossOrigin");
-        audioElement.src = urlAudio;
-        audioElement.play().catch(e => console.error("Falha ao reproduzir áudio:", e));
-      });
-  }
+  tentarTocar();
 };
 
 window.proximaMusica = function() {
@@ -214,4 +211,4 @@ document.addEventListener("click", () => {
   }
 });
 
-console.log("PH MUSIC Player v3.0 pronto.");
+console.log("PH MUSIC Player v4.0 (Final) pronto.");
