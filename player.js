@@ -96,7 +96,7 @@ function inicializarEqualizador(audioElement) {
       audioCtx.resume();
     }
   } catch (err) {
-    console.warn("Equalizador desativado por política de segurança CORS/Navegador.");
+    console.warn("Equalizador desativado para garantir a reprodução do áudio:", err);
   }
 }
 
@@ -122,7 +122,6 @@ window.tocarMusica = function(index) {
     return;
   }
 
-  // Ajuste do índice com loop na lista
   if (index >= lista.length) index = 0;
   if (index < 0) index = lista.length - 1;
 
@@ -149,35 +148,40 @@ window.tocarMusica = function(index) {
     return;
   }
 
-  // Atualiza informações visuais na interface
   if (infoElement) {
     infoElement.innerHTML = `<strong>${faixa.titulo}</strong><br>${faixa.artista}`;
   }
 
-  // Configura os ouvintes de eventos da barra de tempo
   configurarEventosPlayer(audioElement);
 
-  // Atribui a fonte de áudio diretamente
+  // CONFIGURAÇÃO FUNDAMENTAL PARA CORS E STREAMING
+  audioElement.pause();
+  audioElement.crossOrigin = "anonymous"; // Obrigatorio para Web Audio API
   audioElement.src = urlAudio;
+  audioElement.load();
 
-  // Reativa o contexto do equalizador se suspenso
   if (audioCtx && audioCtx.state === "suspended") {
     audioCtx.resume();
   }
 
+  // Tenta inicializar o equalizador
   try {
     inicializarEqualizador(audioElement);
   } catch(e) {}
 
-  // Disparo com verificação e tratamento da Promise do áudio
+  // DISPARO SEGURO DA REPRODUÇÃO
   const playPromise = audioElement.play();
   if (playPromise !== undefined) {
     playPromise
       .then(() => {
-        console.log("Áudio tocando com sucesso!");
+        console.log("Áudio tocando perfeitamente!");
       })
       .catch((err) => {
-        console.warn("Aguardando ação do usuário ou erro na reprodução:", err);
+        console.warn("Erro ao iniciar áudio. Tentando modo de compatibilidade...", err);
+        // Fallback: se o navegador recusou o modo CORS, recarrega o elemento nativo
+        audioElement.removeAttribute("crossOrigin");
+        audioElement.src = urlAudio;
+        audioElement.play().catch(e => console.error("Falha ao reproduzir áudio:", e));
       });
   }
 };
@@ -204,11 +208,10 @@ window.playPause = function() {
   }
 };
 
-// Ativação global do AudioContext no clique do usuário
 document.addEventListener("click", () => {
   if (audioCtx && audioCtx.state === "suspended") {
     audioCtx.resume();
   }
 });
 
-console.log("PH MUSIC Player v2.0 montado com sucesso.");
+console.log("PH MUSIC Player v3.0 pronto.");
