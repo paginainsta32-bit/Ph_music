@@ -1,350 +1,63 @@
-/* ==========================================================================
-   RESET E ESTILOS BASE
-   ========================================================================== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Montserrat', sans-serif;
+/* MODAL NAVEGADOR DE PASTAS CENTRALIZADO E FIXO */
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 1000 !important;
 }
 
-body {
-  background-color: #121212;
-  color: #ffffff;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
+.modal-overlay.hidden {
+  display: none !important;
 }
 
-#app {
-  display: flex;
-  flex: 1;
-  padding-bottom: 90px; /* Espaço para o player não cobrir os cards */
-}
-
-/* ==========================================================================
-   SIDEBAR (MENU LATERAL)
-   ========================================================================== */
-.sidebar {
-  width: 240px;
-  background-color: #000000;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  transition: transform 0.3s ease;
-  z-index: 99;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #00ff66;
-}
-
-.logo h1 {
-  font-size: 1.2rem;
-  font-weight: 800;
-}
-
-.sidebar nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.menu {
-  background: transparent;
-  border: none;
-  color: #b3b3b3;
-  padding: 12px 15px;
-  text-align: left;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.menu:hover, .menu.active {
-  color: #ffffff;
-  background-color: #282828;
-}
-
-.menu.active {
-  color: #00ff66;
-}
-
-.btn-menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  color: #00ff66;
-  font-size: 1.8rem;
-  cursor: pointer;
-  margin-right: 10px;
-}
-
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 98;
-}
-
-/* ==========================================================================
-   CONTEÚDO PRINCIPAL
-   ========================================================================== */
-main {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-}
-
-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-#search {
-  width: 100%;
-  max-width: 400px;
-  padding: 12px 20px;
-  border-radius: 20px;
-  border: none;
-  background-color: #242424;
-  color: #fff;
-  outline: none;
-}
-
-.banner {
-  background: linear-gradient(135deg, #00ff66 0%, #008837 100%);
+.modal-content {
+  background: #181818;
   border-radius: 12px;
-  padding: 30px;
-  color: #000;
-  margin-bottom: 30px;
-}
-
-.banner h2 {
-  font-size: 1.8rem;
-  font-weight: 800;
-}
-
-.titulo {
-  font-size: 1.4rem;
-  margin-bottom: 20px;
-}
-
-/* LISTA DE CARDS */
-.lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background-color: #181818;
-  padding: 15px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.card:hover {
-  background-color: #282828;
-}
-
-.card img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-.card-info h3 {
-  font-size: 0.95rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-info p {
-  font-size: 0.8rem;
-  color: #a7a7a7;
-  margin-top: 4px;
-}
-
-/* ==========================================================================
-   PLAYER (RODAPÉ RESPONSIVO)
-   ========================================================================== */
-.player {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 90px;
-  background-color: #000000;
-  border-top: 1px solid #282828;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  z-index: 100;
-}
-
-.player-left {
-  width: 25%;
-  min-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.85rem;
-}
-
-.player-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.controles-midia {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  width: 100%;
-  max-width: 500px;
-  justify-content: center;
-}
-
-.btn-ctrl {
-  background: none;
-  border: none;
-  font-size: 1.4rem;
-  cursor: pointer;
-}
-
-#audio {
-  width: 100%;
-  max-width: 350px;
-  height: 36px;
-}
-
-.player-right {
-  width: 25%;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  position: relative;
-}
-
-.btn-eq-toggle {
-  background: #282828;
-  border: 1px solid #00ff66;
-  color: #00ff66;
-  padding: 6px 12px;
-  border-radius: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  display: none; /* Ativado no mobile */
-}
-
-.equalizador {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background-color: #181818;
-  padding: 8px 15px;
-  border-radius: 8px;
-  border: 1px solid #282828;
-}
-
-.eq-control {
+  width: 90%;
+  max-width: 550px;
+  height: 70vh;
+  padding: 20px;
+  color: #fff;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  font-size: 0.7rem;
-  color: #b3b3b3;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+  border: 1px solid #00ff66;
 }
 
-.eq-control input[type="range"] {
-  width: 60px;
-  accent-color: #00ff66;
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #282828;
+  padding-bottom: 10px;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: #00ff66;
+  font-size: 28px;
   cursor: pointer;
 }
 
-/* ==========================================================================
-   MEDIA QUERIES (ADAPTAÇÃO PARA SMARTPHONES E TABLETS)
-   ========================================================================== */
-@media (max-width: 768px) {
-  .btn-menu-toggle {
-    display: block;
-  }
+.caminho-atual {
+  font-size: 13px;
+  color: #00ff66;
+  margin: 10px 0;
+  word-break: break-all;
+  background: #000;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
 
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    transform: translateX(-100%);
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .sidebar-overlay.active {
-    display: block;
-  }
-
-  .lista {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 12px;
-  }
-
-  /* Ajustes no Player para telas pequenas */
-  .player {
-    height: auto;
-    padding: 10px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .player-left {
-    width: 100%;
-    text-align: center;
-  }
-
-  .player-center {
-    width: 100%;
-  }
-
-  .player-right {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .btn-eq-toggle {
-    display: block;
-  }
-
-  .equalizador {
-    position: absolute;
-    bottom: 45px;
-    right: 50%;
-    transform: translateX(50%);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8);
-  }
-
-  .equalizador.hidden-mobile {
-    display: none;
-  }
+.lista-pastas {
+  overflow-y: auto;
+  flex: 1;
+  margin-top: 10px;
 }
