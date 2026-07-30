@@ -1,10 +1,13 @@
 let indiceAtual = 0;
+let audioCtx = null;
+let filtroGrave = null;
+let filtroMedio = null;
+let filtroAgudo = null;
+let fonteAudio = null;
 
-// Toca uma música específica pelo índice
 function tocarMusica(index) {
     if (!musicas || musicas.length === 0) return;
 
-    // Garante que o índice fique dentro dos limites da playlist
     if (index >= musicas.length) index = 0;
     if (index < 0) index = musicas.length - 1;
     
@@ -15,10 +18,10 @@ function tocarMusica(index) {
 
     if (!audioElement) return;
 
-    // Remove qualquer restrição de CORS no elemento HTML
-    audioElement.removeAttribute("crossOrigin");
+    // Habilita a leitura de dados/metadados e equalização do áudio
+    audioElement.crossOrigin = "anonymous";
 
-    // Configura o evento para avançar automaticamente ao fim da faixa
+    // Configura o evento para avançar automaticamente ao fim da música
     if (!audioElement.dataset.hasEndedListener) {
         audioElement.addEventListener("ended", () => {
             console.log("Música finalizada! Tocando a próxima...");
@@ -27,7 +30,7 @@ function tocarMusica(index) {
         audioElement.dataset.hasEndedListener = "true";
     }
 
-    // Define o link do áudio vindo do R2
+    // Define a fonte do áudio vinda do Proxy do Worker
     const urlAudio = faixa.url || faixa.src || faixa.urlAudio;
     audioElement.src = urlAudio;
     
@@ -35,18 +38,80 @@ function tocarMusica(index) {
         infoElement.innerText = `${faixa.titulo} - ${faixa.artista}`;
     }
 
+    // Inicializa a Web Audio API (Equalizador)
+    inicializarEqualizador(audioElement);
+
     // Inicia a reprodução
     audioElement.play().catch(e => console.warn("Aguardando ação do usuário:", e));
 }
 
-// Passa para a próxima música da lista
 function proximaMusica() {
     if (!musicas || musicas.length === 0) return;
     tocarMusica(indiceAtual + 1);
 }
 
-// Volta para a música anterior
 function musicaAnterior() {
     if (!musicas || musicas.length === 0) return;
     tocarMusica(indiceAtual - 1);
+}
+
+function inicializarEqualizador(audioElement) {
+    if (!audioElement) return;
+
+    try {
+        if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+
+            // Grave (BASS) - Lowshelf @ 250Hz
+            filtroGrave = audioCtx.createBiquadFilter();
+            filtroGrave.type = "lowshelf";
+            filtroGrave.frequency.value = 250;
+
+            // Médio (MID) - Peaking @ 1500Hz
+            filtroMedio = audioCtx.createBiquadFilter();
+            filtroMedio.type = "peaking";
+            filtroMedio.frequency.value = 1500;
+            filtroMedio.Q.value = 1;
+
+            // Agudo (TREBLE) - Highshelf @ 4000Hz
+            filtroAgudo = audioCtx.createBiquadFilter();
+            filtroAgudo.type = "highshelf";
+            filtroAgudo.frequency.value = 4000;
+
+            // Conecta a cadeia de áudio
+            fonteAudio = audioCtx.createMediaElementSource(audioElement);
+            fonteAudio.connect(filtroGrave);
+            filtroGrave.connect(filtroMedio);
+            filtroMedio.connect(filtroAgudo);
+            filtroAgudo.connect(audioCtx.destination);
+
+            // Conecta os sliders do HTML
+            const sliderGrave = document.getElementById("eq-grave");
+            const sliderMedio = document.getElementById("eq-medio");
+            const sliderAgudo = document.getElementById("eq-agudo");
+
+            if (sliderGrave) {
+                sliderGrave.oninput = (e) => {
+                    if (filtroGrave) filtroGrave.gain.value = parseFloat(e.target.value);
+                };
+            }
+            if (sliderMedio) {
+                sliderMedio.oninput = (e) => {
+                    if (filtroMedio) filtroMedio.gain.value = parseFloat(e.target.value);
+                };
+            }
+            if (sliderAgudo) {
+                sliderAgudo.oninput = (e) => {
+                    if (filtroAgudo) filtroAgudo.gain.value = parseFloat(e.target.value);
+                };
+            }
+        }
+
+        if (audioCtx && audioCtx.state === "suspended") {
+            audioCtx.resume();
+        }
+    } catch (e) {
+        console.warn("Erro ao iniciar equalizador:", e);
+    }
 }
