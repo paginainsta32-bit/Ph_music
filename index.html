@@ -126,6 +126,31 @@
 
     <audio id="audio" controls></audio>
 
+    <!-- PLAYER -->
+<footer class="player">
+
+    <div id="info">
+        Nenhuma música selecionada
+    </div>
+
+    <audio id="audio" controls></audio>
+
+    <!-- EQUALIZADOR -->
+    <div class="equalizer">
+        <div class="eq-band">
+            <label>Grave</label>
+            <input type="range" id="eq-grave" min="-12" max="12" value="0" step="1">
+        </div>
+        <div class="eq-band">
+            <label>Médio</label>
+            <input type="range" id="eq-medio" min="-12" max="12" value="0" step="1">
+        </div>
+        <div class="eq-band">
+            <label>Agudo</label>
+            <input type="range" id="eq-agudo" min="-12" max="12" value="0" step="1">
+        </div>
+    </div>
+
 </footer>
 
 <script src="config.js"></script>
