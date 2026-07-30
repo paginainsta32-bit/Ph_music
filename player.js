@@ -14,12 +14,20 @@ let barra = null;
 let tempoAtual = null;
 let tempoTotal = null;
 
+// ===============================
+// FUNÇÕES UTILITÁRIAS
+// ===============================
+
 function formatarTempo(segundos) {
   if (isNaN(segundos) || !isFinite(segundos)) return "0:00";
   const m = Math.floor(segundos / 60);
   const s = Math.floor(segundos % 60);
   return `${m}:${String(s).padStart(2, "0")}`;
 }
+
+// ===============================
+// EVENTOS DO ELEMENTO DE ÁUDIO
+// ===============================
 
 function configurarEventosPlayer(audioElement) {
   if (!audioElement || audioElement.dataset.playerConfigurado) return;
@@ -36,7 +44,7 @@ function configurarEventosPlayer(audioElement) {
   });
 
   audioElement.addEventListener("ended", () => {
-    proximaMusica();
+    window.proximaMusica();
   });
 
   if (barra) {
@@ -45,6 +53,10 @@ function configurarEventosPlayer(audioElement) {
     };
   }
 }
+
+// ===============================
+// EQUALIZADOR (WEB AUDIO API)
+// ===============================
 
 function inicializarEqualizador(audioElement) {
   if (!audioElement) return;
@@ -84,7 +96,7 @@ function inicializarEqualizador(audioElement) {
       audioCtx.resume();
     }
   } catch (err) {
-    console.warn("Equalizador desativado por política de segurança CORS.");
+    console.warn("Equalizador desativado por política de segurança CORS/Navegador.");
   }
 }
 
@@ -98,7 +110,10 @@ function configurarControlesEqualizador() {
   if (agudo) agudo.oninput = (e) => { if (filtroAgudo) filtroAgudo.gain.value = parseFloat(e.target.value); };
 }
 
-// FUNÇÃO GLOBAL DE REPRODUÇÃO
+// ===============================
+// CONTROLE DE REPRODUÇÃO GLOBAL
+// ===============================
+
 window.tocarMusica = function(index) {
   const lista = window.musicas || [];
 
@@ -107,11 +122,13 @@ window.tocarMusica = function(index) {
     return;
   }
 
+  // Ajuste do índice com loop na lista
   if (index >= lista.length) index = 0;
   if (index < 0) index = lista.length - 1;
 
   window.indiceAtual = index;
   const faixa = lista[window.indiceAtual];
+
   const audioElement = document.getElementById("audio");
   const infoElement = document.getElementById("info");
 
@@ -132,45 +149,66 @@ window.tocarMusica = function(index) {
     return;
   }
 
-  // ATRIBUIÇÃO DA URL E REPRODUÇÃO
-  audioElement.pause();
-  audioElement.src = urlAudio;
-  audioElement.load();
-
+  // Atualiza informações visuais na interface
   if (infoElement) {
     infoElement.innerHTML = `<strong>${faixa.titulo}</strong><br>${faixa.artista}`;
   }
 
+  // Configura os ouvintes de eventos da barra de tempo
   configurarEventosPlayer(audioElement);
+
+  // Atribui a fonte de áudio diretamente
+  audioElement.src = urlAudio;
+
+  // Reativa o contexto do equalizador se suspenso
+  if (audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
 
   try {
     inicializarEqualizador(audioElement);
   } catch(e) {}
 
+  // Disparo com verificação e tratamento da Promise do áudio
   const playPromise = audioElement.play();
   if (playPromise !== undefined) {
-    playPromise.catch((err) => {
-      console.warn("Aguardando ação do usuário para liberar áudio:", err);
-    });
+    playPromise
+      .then(() => {
+        console.log("Áudio tocando com sucesso!");
+      })
+      .catch((err) => {
+        console.warn("Aguardando ação do usuário ou erro na reprodução:", err);
+      });
   }
 };
 
-window.proximaMusica = function() { window.tocarMusica(window.indiceAtual + 1); };
-window.musicaAnterior = function() { window.tocarMusica(window.indiceAtual - 1); };
+window.proximaMusica = function() {
+  window.tocarMusica(window.indiceAtual + 1);
+};
+
+window.musicaAnterior = function() {
+  window.tocarMusica(window.indiceAtual - 1);
+};
 
 window.playPause = function() {
   const audio = document.getElementById("audio");
   if (!audio) return;
+
   if (audio.paused) {
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
     audio.play().catch(err => console.warn(err));
   } else {
     audio.pause();
   }
 };
 
+// Ativação global do AudioContext no clique do usuário
 document.addEventListener("click", () => {
-  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  if (audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
 });
 
 console.log("PH MUSIC Player v2.0 montado com sucesso.");
