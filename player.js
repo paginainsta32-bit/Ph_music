@@ -9,7 +9,6 @@ let fonteAudio = null;
 function tocarMusica(index) {
     if (!musicas || musicas.length === 0) return;
 
-    // Atualiza índice garantindo limites do array
     if (index >= musicas.length) index = 0;
     if (index < 0) index = musicas.length - 1;
     
@@ -20,10 +19,13 @@ function tocarMusica(index) {
 
     if (!audioElement) return;
 
-    // Inicializa Web Audio API no primeiro toque (restrição dos navegadores)
+    // 🔑 ADICIONADO: Define permissão de CORS para evitar o erro de áudio mudo
+    audioElement.crossOrigin = "anonymous";
+
+    // Inicializa Web Audio API/Equalizador
     inicializarEqualizador(audioElement);
 
-    // Atualiza a fonte de áudio (suporta R2 e Blob URLs)
+    // Atualiza a fonte de áudio
     audioElement.src = faixa.src || faixa.url || faixa.urlAudio;
     
     if (infoElement) {
@@ -58,7 +60,7 @@ function inicializarEqualizador(audioElement) {
         audioElement.dataset.hasEndedListener = "true";
     }
 
-    // 2. Cria nós de áudio do equalizador caso ainda não tenham sido criados
+    // 2. Cria nós de áudio do equalizador
     if (!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         audioCtx = new AudioContext();
@@ -79,14 +81,14 @@ function inicializarEqualizador(audioElement) {
         filtroAgudo.type = "highshelf";
         filtroAgudo.frequency.value = 4000;
 
-        // Conecta os nós em cadeia: Audio -> Grave -> Médio -> Agudo -> Alto-falante
+        // Conecta a fonte ao equalizador
         fonteAudio = audioCtx.createMediaElementSource(audioElement);
         fonteAudio.connect(filtroGrave);
         filtroGrave.connect(filtroMedio);
         filtroMedio.connect(filtroAgudo);
         filtroAgudo.connect(audioCtx.destination);
 
-        // Conecta os controles sliders do HTML aos ganhos dos filtros
+        // Conecta os sliders do HTML
         const sliderGrave = document.getElementById("eq-grave");
         const sliderMedio = document.getElementById("eq-medio");
         const sliderAgudo = document.getElementById("eq-agudo");
@@ -108,7 +110,6 @@ function inicializarEqualizador(audioElement) {
         }
     }
 
-    // Garante que o contexto de áudio retome o estado ativo
     if (audioCtx && audioCtx.state === "suspended") {
         audioCtx.resume();
     }
