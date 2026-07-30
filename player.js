@@ -10,50 +10,30 @@ let filtroMedio = null;
 let filtroAgudo = null;
 let fonteAudio = null;
 
-// Elementos da Interface (UI)
+// Elementos UI
 let barra = null;
 let tempoAtual = null;
 let tempoTotal = null;
 
-// ===============================
-// FUNÇÕES UTILITÁRIAS
-// ===============================
-
 function formatarTempo(segundos) {
   if (isNaN(segundos) || !isFinite(segundos)) return "0:00";
-
   const m = Math.floor(segundos / 60);
   const s = Math.floor(segundos % 60);
-
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-// ===============================
-// EVENTOS DO AUDIO ELEMENT
-// ===============================
-
 function configurarEventosPlayer(audioElement) {
-  if (!audioElement) return;
-
-  if (audioElement.dataset.playerConfigurado) return;
+  if (!audioElement || audioElement.dataset.playerConfigurado) return;
   audioElement.dataset.playerConfigurado = "true";
 
   audioElement.addEventListener("loadedmetadata", () => {
-    if (barra) {
-      barra.max = audioElement.duration || 0;
-    }
-    if (tempoTotal) {
-      tempoTotal.textContent = formatarTempo(audioElement.duration);
-    }
+    if (barra) barra.max = audioElement.duration || 0;
+    if (tempoTotal) tempoTotal.textContent = formatarTempo(audioElement.duration);
   });
 
   audioElement.addEventListener("timeupdate", () => {
-    if (barra) {
-      barra.value = audioElement.currentTime;
-    }
-    if (tempoAtual) {
-      tempoAtual.textContent = formatarTempo(audioElement.currentTime);
-    }
+    if (barra) barra.value = audioElement.currentTime;
+    if (tempoAtual) tempoAtual.textContent = formatarTempo(audioElement.currentTime);
   });
 
   audioElement.addEventListener("ended", () => {
@@ -66,10 +46,6 @@ function configurarEventosPlayer(audioElement) {
     };
   }
 }
-
-// ===============================
-// EQUALIZADOR (WEB AUDIO API)
-// ===============================
 
 function inicializarEqualizador(audioElement) {
   if (!audioElement) return;
@@ -109,7 +85,7 @@ function inicializarEqualizador(audioElement) {
       audioCtx.resume();
     }
   } catch (err) {
-    console.error("Erro ao inicializar o equalizador:", err);
+    console.warn("Equalizador desativado por política CORS do navegador.");
   }
 }
 
@@ -118,32 +94,13 @@ function configurarControlesEqualizador() {
   const medio = document.getElementById("eq-medio");
   const agudo = document.getElementById("eq-agudo");
 
-  if (grave) {
-    grave.addEventListener("input", (e) => {
-      if (filtroGrave) filtroGrave.gain.value = parseFloat(e.target.value);
-    });
-  }
-
-  if (medio) {
-    medio.addEventListener("input", (e) => {
-      if (filtroMedio) filtroMedio.gain.value = parseFloat(e.target.value);
-    });
-  }
-
-  if (agudo) {
-    agudo.addEventListener("input", (e) => {
-      if (filtroAgudo) filtroAgudo.gain.value = parseFloat(e.target.value);
-    });
-  }
+  if (grave) grave.oninput = (e) => { if (filtroGrave) filtroGrave.gain.value = parseFloat(e.target.value); };
+  if (medio) medio.oninput = (e) => { if (filtroMedio) filtroMedio.gain.value = parseFloat(e.target.value); };
+  if (agudo) agudo.oninput = (e) => { if (filtroAgudo) filtroAgudo.gain.value = parseFloat(e.target.value); };
 }
-
-// ===============================
-// CONTROLE DE NAVEGAÇÃO E MÚSICA
-// ===============================
 
 function tocarMusica(index) {
   const listaMusicas = window.musicas || [];
-
   if (!listaMusicas || listaMusicas.length === 0) return;
 
   if (index >= listaMusicas.length) index = 0;
@@ -158,145 +115,57 @@ function tocarMusica(index) {
   tempoAtual = document.getElementById("tempo-atual");
   tempoTotal = document.getElementById("tempo-total");
 
-  if (!audioElement) {
-    console.error("Elemento <audio id='audio'> não foi encontrado.");
-    return;
-  }
+  if (!audioElement) return;
 
   const urlAudio = faixa ? (faixa.url || faixa.src || faixa.urlAudio) : null;
-
-  console.log("Tentando tocar URL:", urlAudio);
+  console.log("Tentando reproduzir:", urlAudio);
 
   if (!urlAudio) {
-    console.error("URL de áudio nula/inválida para a faixa:", faixa);
+    console.error("URL de áudio inválida para a faixa:", faixa);
     return;
   }
 
-  // Prepara o elemento de áudio limpo
+  // Reseta a tag de áudio
   audioElement.pause();
-  audioElement.removeAttribute("src");
-  audioElement.crossOrigin = "anonymous";
   audioElement.src = urlAudio;
-  audioElement.load(); // Força o navegador a carregar a nova fonte de mídia
+  audioElement.load();
 
   if (infoElement) {
     infoElement.innerHTML = `<strong>${faixa.titulo}</strong><br>${faixa.artista}`;
   }
 
   configurarEventosPlayer(audioElement);
-  inicializarEqualizador(audioElement);
 
-  // Inicia a reprodução garantindo a resolução da Promise
+  // Tenta conectar o equalizador sem quebrar a reprodução caso falhe
+  try {
+    inicializarEqualizador(audioElement);
+  } catch(e) {}
+
+  // Toca a música
   const playPromise = audioElement.play();
   if (playPromise !== undefined) {
     playPromise.catch((err) => {
-      console.warn("Aguardando interação ou erro ao reproduzir áudio:", err);
+      console.warn("Clique necessário para iniciar o áudio:", err);
     });
   }
 }
 
-function proximaMusica() {
-  tocarMusica(indiceAtual + 1);
-}
-
-function musicaAnterior() {
-  tocarMusica(indiceAtual - 1);
-}
-
-// ===============================
-// CONTROLES EXTRAS DO PLAYER
-// ===============================
+function proximaMusica() { tocarMusica(indiceAtual + 1); }
+function musicaAnterior() { tocarMusica(indiceAtual - 1); }
 
 function playPause() {
   const audio = document.getElementById("audio");
   if (!audio) return;
-
   if (audio.paused) {
-    if (audioCtx && audioCtx.state === "suspended") {
-      audioCtx.resume();
-    }
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
     audio.play().catch(err => console.warn(err));
   } else {
     audio.pause();
   }
 }
 
-function pararMusica() {
-  const audio = document.getElementById("audio");
-  if (!audio) return;
-
-  audio.pause();
-  audio.currentTime = 0;
-}
-
-function aumentarVolume() {
-  const audio = document.getElementById("audio");
-  if (!audio) return;
-
-  audio.volume = Math.min(1, audio.volume + 0.1);
-}
-
-function diminuirVolume() {
-  const audio = document.getElementById("audio");
-  if (!audio) return;
-
-  audio.volume = Math.max(0, audio.volume - 0.1);
-}
-
-function mutar() {
-  const audio = document.getElementById("audio");
-  if (!audio) return;
-
-  audio.muted = !audio.muted;
-}
-
-// ===============================
-// ATALHOS DO TECLADO
-// ===============================
-
-document.addEventListener("keydown", (e) => {
-  if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
-    return;
-  }
-
-  switch (e.code) {
-    case "Space":
-      e.preventDefault();
-      playPause();
-      break;
-
-    case "ArrowRight":
-      proximaMusica();
-      break;
-
-    case "ArrowLeft":
-      musicaAnterior();
-      break;
-
-    case "ArrowUp":
-      e.preventDefault();
-      aumentarVolume();
-      break;
-
-    case "ArrowDown":
-      e.preventDefault();
-      diminuirVolume();
-      break;
-
-    case "KeyM":
-      mutar();
-      break;
-  }
-});
-
-// ===============================
-// ATIVAÇÃO DO CONTEXTO DE ÁUDIO
-// ===============================
-
 document.addEventListener("click", () => {
-  if (audioCtx && audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
 });
 
 console.log("PH MUSIC Player carregado com sucesso.");
