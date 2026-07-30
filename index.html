@@ -4,6 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>PH MUSIC</title>
@@ -11,6 +12,7 @@
 <link rel="stylesheet" href="style.css">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
+
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,29 +28,41 @@
 <div id="app">
 
     <!-- MENU LATERAL -->
+
     <aside class="sidebar">
 
         <div class="logo">
+
             <span>🎵</span>
+
             <h1>PH MUSIC</h1>
+
         </div>
 
         <nav>
 
             <button class="menu active">
+
                 🏠 Início
+
             </button>
 
             <button class="menu">
+
                 🎤 Artistas
+
             </button>
 
             <button class="menu">
+
                 💿 Álbuns
+
             </button>
 
             <button class="menu">
+
                 ❤️ Favoritas
+
             </button>
 
         </nav>
@@ -56,6 +70,7 @@
     </aside>
 
     <!-- CONTEÚDO -->
+
     <main>
 
         <header>
@@ -63,19 +78,19 @@
             <input
                 id="search"
                 type="text"
-                placeholder="Pesquisar músicas...">
-
-            <button id="btn-pasta" class="btn-pasta">
-                📁 Ver por Pastas
-            </button>
+                placeholder="Pesquisar músicas..."
+            >
 
         </header>
 
         <section class="banner">
 
             <div>
+
                 <h2>Bem-vindo ao PH MUSIC</h2>
+
                 <p>Sua biblioteca musical pessoal.</p>
+
             </div>
 
         </section>
@@ -95,85 +110,27 @@
 </div>
 
 <!-- PLAYER -->
+
 <footer class="player">
 
-    <!-- Música -->
     <div id="info">
+
         Nenhuma música selecionada
-    </div>
-
-    <!-- Áudio -->
-    <audio id="audio"></audio>
-
-    <!-- Barra de progresso -->
-    <div class="player-progress">
-
-        <span id="tempo-atual">0:00</span>
-
-        <input
-            id="progresso"
-            type="range"
-            min="0"
-            max="100"
-            value="0"
-            step="1">
-
-        <span id="tempo-total">0:00</span>
 
     </div>
 
-    <!-- Equalizador -->
-    <div class="equalizer">
-
-        <div class="eq-band">
-
-            <label>Grave</label>
-
-            <input
-                type="range"
-                id="eq-grave"
-                min="-12"
-                max="12"
-                value="0"
-                step="1">
-
-        </div>
-
-        <div class="eq-band">
-
-            <label>Médio</label>
-
-            <input
-                type="range"
-                id="eq-medio"
-                min="-12"
-                max="12"
-                value="0"
-                step="1">
-
-        </div>
-
-        <div class="eq-band">
-
-            <label>Agudo</label>
-
-            <input
-                type="range"
-                id="eq-agudo"
-                min="-12"
-                max="12"
-                value="0"
-                step="1">
-
-        </div>
-
-    </div>
+    <audio id="audio" controls></audio>
 
 </footer>
 
 <script src="config.js"></script>
+
+<script src="api.js"></script>
+
 <script src="player.js"></script>
+
 <script src="app.js"></script>
 
 </body>
+
 </html>
