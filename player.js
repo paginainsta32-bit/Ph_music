@@ -159,7 +159,7 @@ function tocarMusica(index) {
   tempoTotal = document.getElementById("tempo-total");
 
   if (!audioElement) {
-    console.error("Elemento <audio id='audio'> não encontrado.");
+    console.error("Elemento <audio id='audio'> não foi encontrado.");
     return;
   }
 
@@ -172,9 +172,12 @@ function tocarMusica(index) {
     return;
   }
 
+  // Prepara o elemento de áudio limpo
   audioElement.pause();
+  audioElement.removeAttribute("src");
   audioElement.crossOrigin = "anonymous";
   audioElement.src = urlAudio;
+  audioElement.load(); // Força o navegador a carregar a nova fonte de mídia
 
   if (infoElement) {
     infoElement.innerHTML = `<strong>${faixa.titulo}</strong><br>${faixa.artista}`;
@@ -183,9 +186,13 @@ function tocarMusica(index) {
   configurarEventosPlayer(audioElement);
   inicializarEqualizador(audioElement);
 
-  audioElement.play().catch((err) => {
-    console.warn("Erro ao reproduzir o áudio:", err);
-  });
+  // Inicia a reprodução garantindo a resolução da Promise
+  const playPromise = audioElement.play();
+  if (playPromise !== undefined) {
+    playPromise.catch((err) => {
+      console.warn("Aguardando interação ou erro ao reproduzir áudio:", err);
+    });
+  }
 }
 
 function proximaMusica() {
