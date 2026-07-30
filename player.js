@@ -259,7 +259,7 @@ function volumeMaximo() {
 
   audio.volume = 1;
 }
-
+<button onclick="playPause()" id="btn-play">▶ / ❚❚</button>
 function mutar() {
   const audio = document.getElementById("audio");
   if (!audio) return;
