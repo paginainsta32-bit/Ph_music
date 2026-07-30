@@ -228,5 +228,33 @@ height:180px;
 font-size:30px;
 
 }
+/* MODAL NAVEGADOR DE PASTAS */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000;
+}
+.modal-overlay.hidden { display: none; }
+.modal-content {
+  background: #181818; border-radius: 12px; width: 90%; max-width: 500px;
+  padding: 20px; color: #fff; max-height: 80vh; display: flex; flex-direction: column;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; }
+.btn-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+.caminho-atual { font-size: 12px; color: #00ff66; margin: 10px 0; word-break: break-all; }
+.lista-pastas { overflow-y: auto; flex: 1; margin-top: 100px; }
+.item-pasta, .item-arquivo { padding: 12px; border-bottom: 1px solid #282828; cursor: pointer; transition: 0.2s; }
+.item-pasta:hover { background: #282828; color: #00ff66; }
+.item-arquivo:hover { background: #282828; color: #1db954; }
+
+/* CONTROLES DO PLAYER & EQUALIZADOR */
+.player { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: #111; }
+.controles-midia { display: flex; align-items: center; gap: 10px; }
+.btn-ctrl { background: transparent; border: none; font-size: 20px; cursor: pointer; color: #fff; }
+.equalizador { display: flex; align-items: center; gap: 12px; font-size: 11px; }
+.eq-control { display: flex; flex-direction: column; align-items: center; }
+.eq-control input[type=range] { width: 60px; accent-color: #00ff66; }    
 
 }
