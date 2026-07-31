@@ -17,12 +17,12 @@ function mostrarMusicas(lista) {
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-            <img src="assets/capa-default.jpg" alt="Capa">
-            <div class="card-info">
-                <h3>${musica.titulo}</h3>
-                <p>${musica.artista || "PH MUSIC"}</p>
-            </div>
-        `;
+      <img src="assets/capa-default.jpg" alt="Capa">
+      <div class="card-info">
+        <h3>${musica.titulo}</h3>
+        <p>${musica.artista || "PH MUSIC"}</p>
+      </div>
+    `;
     card.onclick = () => {
       tocarMusica(index);
     };
@@ -35,15 +35,19 @@ function configurarEventosModal() {
   const btnAbrir = document.getElementById("btn-pastas");
   const btnFechar = document.getElementById("btn-fechar-modal");
 
-  btnAbrir.onclick = () => {
-    modal.classList.remove("hidden");
-    buscarConteudoPasta("");
-    fecharSidebar();
-  };
+  if (btnAbrir) {
+    btnAbrir.onclick = () => {
+      if (modal) modal.classList.remove("hidden");
+      buscarConteudoPasta(""); // Carrega diretórios da raiz do R2
+      fecharSidebar();
+    };
+  }
 
-  btnFechar.onclick = () => {
-    modal.classList.add("hidden");
-  };
+  if (btnFechar) {
+    btnFechar.onclick = () => {
+      if (modal) modal.classList.add("hidden");
+    };
+  }
 
   window.onclick = (event) => {
     if (event.target === modal) {
@@ -59,17 +63,20 @@ function configurarMenuMobile() {
   const btnEqToggle = document.getElementById("btn-toggle-eq");
   const eqBox = document.getElementById("equalizador-box");
 
-  btnToggle.onclick = () => {
-    sidebar.classList.toggle("open");
-    overlay.classList.toggle("active");
-  };
+  if (btnToggle) {
+    btnToggle.onclick = () => {
+      if (sidebar) sidebar.classList.toggle("open");
+      if (overlay) overlay.classList.toggle("active");
+    };
+  }
 
-  overlay.onclick = fecharSidebar;
+  if (overlay) overlay.onclick = fecharSidebar;
 
-  // Botão para mostrar/esconder o Equalizador em telas menores
-  btnEqToggle.onclick = () => {
-    eqBox.classList.toggle("hidden-mobile");
-  };
+  if (btnEqToggle && eqBox) {
+    btnEqToggle.onclick = () => {
+      eqBox.classList.toggle("hidden-mobile");
+    };
+  }
 }
 
 function fecharSidebar() {
