@@ -1,51 +1,55 @@
 let musicas = [];
 let pastaAtual = "";
 
-// Função para gerar a URL correta do áudio (usando R2_URL ou fallback)
+// Função para gerar a URL correta do áudio MP3
 function obterUrlAudio(key) {
   const baseUrl = CONFIG.R2_URL || CONFIG.API_URL;
-  // Remove barra inicial/final se houver para evitar URL dupla
   const urlLimpa = baseUrl.replace(/\/$/, "");
   const keyLimpa = key.replace(/^\//, "");
   return `${urlLimpa}/${encodeURIComponent(keyLimpa).replace(/%2F/g, "/")}`;
 }
 
-// Carregamento Inicial das Músicas
+// Carregamento Inicial: Busca TODAS as músicas de todas as pastas do R2
 async function carregarMusicas() {
   const container = document.getElementById("lista-musicas");
-  if (container) container.innerHTML = "<p style='padding:20px; color:#888;'>Carregando biblioteca...</p>";
+  if (container) container.innerHTML = "<p style='padding:20px; color:#888;'>Carregando todas as músicas...</p>";
 
   try {
-    const resposta = await fetch(CONFIG.API_URL);
+    // Requisita todas as músicas do bucket R2
+    const resposta = await fetch(`${CONFIG.API_URL}?all=true`);
     if (!resposta.ok) throw new Error("Erro ao acessar a API");
 
     const dados = await resposta.json();
-    console.log("Dados recebidos da API:", dados);
+    console.log("Todas as músicas do R2:", dados);
 
     const arquivos = dados.files || (Array.isArray(dados) ? dados : []);
 
+    // Filtra apenas arquivos de áudio válidos
     musicas = arquivos
       .filter(item => {
         const k = (item.key || item.name || "").toLowerCase();
         return k.endsWith('.mp3') || k.endsWith('.wav') || k.endsWith('.m4a') || k.endsWith('.aac') || k.endsWith('.flac');
       })
-      .map(item => ({
-        titulo: item.key ? item.key.split('/').pop() : 'Música',
-        artista: 'PH MUSIC',
-        url: obterUrlAudio(item.key)
-      }));
+      .map(item => {
+        const keyPath = item.key || item.name;
+        const partes = keyPath.split('/');
+        const nomeMusica = partes.pop();
+        const nomePasta = partes.length > 0 ? partes.join('/') : 'Biblioteca';
 
-    console.log("Músicas processadas na raiz:", musicas);
+        return {
+          titulo: nomeMusica,
+          artista: nomePasta,
+          url: obterUrlAudio(keyPath)
+        };
+      });
+
+    console.log("Músicas mapeadas:", musicas);
 
     if (musicas.length > 0) {
       mostrarMusicas(musicas);
     } else {
       if (container) {
-        container.innerHTML = `
-          <div style="padding:20px; color:#aaa">
-            Nenhuma música na raiz. Clique em <strong style="color:#00ff66; cursor:pointer;" onclick="document.getElementById('btn-pastas').click()">📁 Procurar por Pastas</strong> para navegar no R2.
-          </div>
-        `;
+        container.innerHTML = `<p style='padding:20px; color:#aaa'>Nenhuma música encontrada no R2.</p>`;
       }
     }
 
@@ -57,7 +61,7 @@ async function carregarMusicas() {
   }
 }
 
-// Navegador de Pastas R2
+// Navegador de Pastas no Modal
 async function buscarConteudoPasta(prefixo = "") {
   pastaAtual = prefixo;
   const container = document.getElementById("conteudo-pastas");
