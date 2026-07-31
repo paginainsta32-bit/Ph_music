@@ -1,55 +1,78 @@
 let musicas = [];
 let pastaAtual = "";
 
-// Carregamento Padrão Inicial de Músicas
+// Carregamento Inicial das Músicas no Início
 async function carregarMusicas() {
+  const container = document.getElementById("lista-musicas");
+  if (container) container.innerHTML = "<p style='padding:20px; color:#888;'>Carregando biblioteca...</p>";
+
   try {
     const resposta = await fetch(CONFIG.API_URL);
     if (!resposta.ok) throw new Error("Erro ao acessar a API");
 
-    musicas = await resposta.json();
-    console.log("Músicas carregadas:", musicas);
+    const dados = await resposta.json();
+    console.log("Dados recebidos da API:", dados);
+
+    // Se a API retornar um objeto { files: [...] }, extrai o array files
+    const arquivos = dados.files || (Array.isArray(dados) ? dados : []);
+
+    // Converte os arquivos para a estrutura das músicas
+    musicas = arquivos
+      .filter(item => {
+        const k = item.key || item.name || "";
+        return k.endsWith('.mp3') || k.endsWith('.wav') || k.endsWith('.m4a');
+      })
+      .map(item => ({
+        titulo: item.key ? item.key.split('/').pop() : 'Música',
+        artista: 'PH MUSIC',
+        url: `${CONFIG.API_URL}/${item.key}`
+      }));
+
+    console.log("Músicas processadas:", musicas);
     mostrarMusicas(musicas);
+
   } catch (erro) {
-    console.error(erro);
-    document.getElementById("lista-musicas").innerHTML = `
-      <div style="padding:30px;color:#ff4444">
-          Não foi possível carregar as músicas.
-      </div>
-    `;
+    console.error("Erro ao carregar músicas:", erro);
+    if (container) {
+      container.innerHTML = `
+        <div style="padding:20px; color:#ff4444">
+          Não foi possível carregar as músicas da raiz. Use o botão <strong>Procurar por Pastas</strong> no menu lateral.
+        </div>
+      `;
+    }
   }
 }
 
-// Buscar Pastas e Arquivos no Worker R2
+// Navegador de Pastas R2
 async function buscarConteudoPasta(prefixo = "") {
   pastaAtual = prefixo;
   const container = document.getElementById("conteudo-pastas");
   const elementoCaminho = document.getElementById("caminho-atual");
-  
-  if (elementoCaminho) elementoCaminho.textContent = `/${prefixo}`;
-  container.innerHTML = "<p class='loading' style='padding:15px; color:#888;'>Carregando pastas e arquivos...</p>";
+
+  if (elementoCaminho) {
+    elementoCaminho.textContent = prefixo === "" ? " / (Raiz)" : ` / ${prefixo}`;
+  }
+
+  if (container) {
+    container.innerHTML = "<p style='padding:15px; color:#888;'>📂 Carregando pastas do R2...</p>";
+  }
 
   try {
-    // Monta a URL de busca de pastas
     const url = `${CONFIG.API_URL}?prefix=${encodeURIComponent(prefixo)}`;
-    console.log("Buscando pastas na URL:", url);
-
     const resposta = await fetch(url);
-    if (!resposta.ok) throw new Error("Erro ao consultar a API");
+    if (!resposta.ok) throw new Error("Erro de conexão com o R2");
 
     const dados = await resposta.json();
-    console.log("Dados recebidos da API R2:", dados); // Veja isso no Console (F12)
-
+    if (!container) return;
+    
     container.innerHTML = "";
 
-    // Botão de Voltar para a Pasta Anterior
+    // 1. Botão Voltar
     if (prefixo !== "") {
       const itemVoltar = document.createElement("div");
       itemVoltar.className = "item-pasta pasta-voltar";
-      itemVoltar.innerHTML = "📂 <strong>.. (Voltar)</strong>";
-      itemVoltar.style.cursor = "pointer";
-      itemVoltar.style.padding = "10px";
-      itemVoltar.style.color = "#00ff66";
+      itemVoltar.innerHTML = "🔙 <strong>.. (Voltar para pasta anterior)</strong>";
+      itemVoltar.style.cssText = "padding: 12px; color: #00ff66; cursor: pointer; border-bottom: 1px solid #333;";
 
       itemVoltar.onclick = () => {
         const partes = prefixo.split("/").filter(Boolean);
@@ -60,58 +83,53 @@ async function buscarConteudoPasta(prefixo = "") {
       container.appendChild(itemVoltar);
     }
 
-    // 1. PROCESSAR SUBPASTAS (Garantindo compatibilidade com objetos ou delimitadores)
-    const pastas = dados.folders || dados.delimitedPrefixes || [];
-    
+    // 2. Subpastas
+    const pastas = dados.folders || [];
     if (pastas.length > 0) {
-      pastas.forEach((pasta) => {
+      pastas.forEach((pastaPath) => {
         const item = document.createElement("div");
         item.className = "item-pasta";
-        const nomePasta = pasta.replace(prefixo, "").replace("/", "");
-        item.innerHTML = `📁 ${nomePasta}`;
-        item.style.cursor = "pointer";
-        item.style.padding = "10px";
-        item.style.borderBottom = "1px solid #282828";
-        
-        item.onclick = () => buscarConteudoPasta(pasta.endsWith("/") ? pasta : pasta + "/");
+
+        let nomeExibicao = pastaPath.replace(prefixo, "");
+        if (nomeExibicao.endsWith("/")) nomeExibicao = nomeExibicao.slice(0, -1);
+
+        item.innerHTML = `📁 <strong>${nomeExibicao}</strong>`;
+        item.style.cssText = "padding: 12px; cursor: pointer; border-bottom: 1px solid #282828; color: #fff;";
+
+        item.onclick = () => buscarConteudoPasta(pastaPath);
         container.appendChild(item);
       });
     }
 
-    // 2. PROCESSAR ARQUIVOS DA PASTA
-    const arquivos = dados.files || (Array.isArray(dados) ? dados : dados.objects) || [];
-    
-    // Filtrar apenas arquivos de áudio válidos
-    const musicasDaPasta = arquivos
-      .filter((f) => {
-        const key = f.key || f.titulo || f.name || f.url || "";
-        return key.endsWith(".mp3") || key.endsWith(".wav") || key.endsWith(".m4a") || key.endsWith(".aac");
-      })
-      .map((f) => {
-        const rawKey = f.key || f.name || f.titulo || "";
-        const nomeArquivo = rawKey.split("/").pop();
-        return {
-          titulo: f.titulo || nomeArquivo,
-          artista: prefixo ? prefixo.replace("/", "") : (f.artista || "R2 Storage"),
-          url: f.url || `${CONFIG.API_URL}/file/${rawKey}`
-        };
-      });
+    // 3. Músicas da pasta
+    const arquivos = dados.files || [];
+    const faixasDaPasta = [];
 
-    if (musicasDaPasta.length > 0) {
-      musicasDaPasta.forEach((musica) => {
+    arquivos.forEach((file) => {
+      const key = file.key || "";
+      if (key.endsWith(".mp3") || key.endsWith(".wav") || key.endsWith(".m4a")) {
+        const nomeMusica = key.split("/").pop();
+        faixasDaPasta.push({
+          titulo: nomeMusica,
+          artista: prefixo ? prefixo.replace("/", "") : "PH MUSIC",
+          url: `${CONFIG.API_URL}/${key}`
+        });
+      }
+    });
+
+    if (faixasDaPasta.length > 0) {
+      faixasDaPasta.forEach((musica) => {
         const item = document.createElement("div");
         item.className = "item-arquivo";
         item.innerHTML = `🎵 ${musica.titulo}`;
-        item.style.cursor = "pointer";
-        item.style.padding = "10px";
-        item.style.borderBottom = "1px solid #282828";
+        item.style.cssText = "padding: 12px; cursor: pointer; border-bottom: 1px solid #222; color: #b3b3b3;";
 
         item.onclick = () => {
-          musicas = musicasDaPasta;
+          musicas = faixasDaPasta;
           mostrarMusicas(musicas);
-          const idx = musicas.findIndex((m) => m.url === musica.url);
-          tocarMusica(idx >= 0 ? idx : 0);
-          
+          const index = musicas.findIndex(m => m.url === musica.url);
+          tocarMusica(index >= 0 ? index : 0);
+
           const modal = document.getElementById("modal-pastas");
           if (modal) modal.classList.add("hidden");
         };
@@ -119,13 +137,14 @@ async function buscarConteudoPasta(prefixo = "") {
       });
     }
 
-    // Se nada for encontrado
-    if (pastas.length === 0 && musicasDaPasta.length === 0) {
-      container.innerHTML = "<p style='padding:15px; color:#aaa;'>Nenhuma subpasta ou música encontrada neste diretório.</p>";
+    if (pastas.length === 0 && faixasDaPasta.length === 0) {
+      container.innerHTML = "<p style='padding:20px; color:#aaa;'>Nenhuma subpasta ou música encontrada nesta pasta.</p>";
     }
 
   } catch (erro) {
-    console.error("Erro no buscarConteudoPasta:", erro);
-    container.innerHTML = `<p style='padding:15px; color:#ff4444;'>Erro ao carregar diretórios do R2. Verifique o console (F12).</p>`;
+    console.error("Erro ao carregar pastas:", erro);
+    if (container) {
+      container.innerHTML = `<p style='padding:20px; color:#ff4444;'>Erro ao conectar no R2.<br><small>${erro.message}</small></p>`;
+    }
   }
 }
