@@ -1,7 +1,16 @@
 let musicas = [];
 let pastaAtual = "";
 
-// Carregamento Inicial das Músicas no Início
+// Função para gerar a URL correta do áudio (usando R2_URL ou fallback)
+function obterUrlAudio(key) {
+  const baseUrl = CONFIG.R2_URL || CONFIG.API_URL;
+  // Remove barra inicial/final se houver para evitar URL dupla
+  const urlLimpa = baseUrl.replace(/\/$/, "");
+  const keyLimpa = key.replace(/^\//, "");
+  return `${urlLimpa}/${encodeURIComponent(keyLimpa).replace(/%2F/g, "/")}`;
+}
+
+// Carregamento Inicial das Músicas
 async function carregarMusicas() {
   const container = document.getElementById("lista-musicas");
   if (container) container.innerHTML = "<p style='padding:20px; color:#888;'>Carregando biblioteca...</p>";
@@ -15,7 +24,6 @@ async function carregarMusicas() {
 
     const arquivos = dados.files || (Array.isArray(dados) ? dados : []);
 
-    // Filtra músicas aceitando qualquer extensão em maiúscula ou minúscula
     musicas = arquivos
       .filter(item => {
         const k = (item.key || item.name || "").toLowerCase();
@@ -24,7 +32,7 @@ async function carregarMusicas() {
       .map(item => ({
         titulo: item.key ? item.key.split('/').pop() : 'Música',
         artista: 'PH MUSIC',
-        url: `${CONFIG.API_URL}/${item.key}`
+        url: obterUrlAudio(item.key)
       }));
 
     console.log("Músicas processadas na raiz:", musicas);
@@ -44,11 +52,7 @@ async function carregarMusicas() {
   } catch (erro) {
     console.error("Erro ao carregar músicas:", erro);
     if (container) {
-      container.innerHTML = `
-        <div style="padding:20px; color:#ff4444">
-          Erro ao conectar com a API.
-        </div>
-      `;
+      container.innerHTML = `<div style="padding:20px; color:#ff4444">Erro ao conectar com a API.</div>`;
     }
   }
 }
@@ -93,7 +97,7 @@ async function buscarConteudoPasta(prefixo = "") {
       container.appendChild(itemVoltar);
     }
 
-    // 2. Exibir Subpastas (As 14 pastas que apareceram no seu console!)
+    // 2. Subpastas
     const pastas = dados.folders || [];
     if (pastas.length > 0) {
       pastas.forEach((pastaPath) => {
@@ -123,7 +127,7 @@ async function buscarConteudoPasta(prefixo = "") {
         faixasDaPasta.push({
           titulo: nomeMusica,
           artista: prefixo ? prefixo.replace("/", "") : "PH MUSIC",
-          url: `${CONFIG.API_URL}/${key}`
+          url: obterUrlAudio(key)
         });
       }
     });
