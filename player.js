@@ -2,14 +2,19 @@ const audio = document.getElementById("audio");
 let musicaAtual = 0;
 
 /* ==========================================================================
-   WEB AUDIO API - EQUALIZADOR
+   WEB AUDIO API - EQUALIZADOR (Apenas Desktop para evitar bloqueio no Safari)
    ========================================================================== */
 let audioCtx;
 let source;
 let lowFilter, midFilter, highFilter;
+let eqAtivo = false;
+
+// Detecta se é dispositivo móvel (iOS/Android)
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 function inicializarAudioContext() {
-  if (audioCtx) return;
+  // Se for celular, pulamos a Web Audio API para o Safari não matar o som em segundo plano
+  if (isMobile || audioCtx) return;
 
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -33,25 +38,26 @@ function inicializarAudioContext() {
     lowFilter.connect(midFilter);
     midFilter.connect(highFilter);
     highFilter.connect(audioCtx.destination);
+    eqAtivo = true;
   } catch (e) {
-    console.warn("Web Audio API não suportada ou bloqueada no background:", e);
+    console.warn("Equalizador desativado para garantir segundo plano:", e);
   }
 }
 
-// Ouvintes do Equalizador
+// Ouvintes do Equalizador (Só funcionam se o AudioContext estiver ativo)
 document.getElementById("eq-grave").addEventListener("input", (e) => {
-  inicializarAudioContext();
-  if (lowFilter) lowFilter.gain.value = parseFloat(e.target.value);
+  if (!isMobile) inicializarAudioContext();
+  if (eqAtivo && lowFilter) lowFilter.gain.value = parseFloat(e.target.value);
 });
 
 document.getElementById("eq-medio").addEventListener("input", (e) => {
-  inicializarAudioContext();
-  if (midFilter) midFilter.gain.value = parseFloat(e.target.value);
+  if (!isMobile) inicializarAudioContext();
+  if (eqAtivo && midFilter) midFilter.gain.value = parseFloat(e.target.value);
 });
 
 document.getElementById("eq-agudo").addEventListener("input", (e) => {
-  inicializarAudioContext();
-  if (highFilter) highFilter.gain.value = parseFloat(e.target.value);
+  if (!isMobile) inicializarAudioContext();
+  if (eqAtivo && highFilter) highFilter.gain.value = parseFloat(e.target.value);
 });
 
 /* ==========================================================================
@@ -96,9 +102,11 @@ function atualizarMediaSession(musica) {
 function tocarMusica(indice) {
   if (!musicas || musicas.length === 0) return;
 
-  inicializarAudioContext();
-  if (audioCtx && audioCtx.state === "suspended") {
-    audioCtx.resume();
+  if (!isMobile) {
+    inicializarAudioContext();
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
   }
 
   musicaAtual = indice;
@@ -108,7 +116,7 @@ function tocarMusica(indice) {
   audio.play().then(() => {
     atualizarMediaSession(musica);
   }).catch((err) => {
-    console.error("Erro ao reproduzir:", err);
+    console.error("Erro ao reproduzir no Safari:", err);
   });
 
   const info = document.getElementById("info");
