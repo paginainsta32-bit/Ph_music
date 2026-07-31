@@ -13,14 +13,13 @@ async function carregarMusicas() {
     const dados = await resposta.json();
     console.log("Dados recebidos da API:", dados);
 
-    // Se a API retornar um objeto { files: [...] }, extrai o array files
     const arquivos = dados.files || (Array.isArray(dados) ? dados : []);
 
-    // Converte os arquivos para a estrutura das músicas
+    // Filtra músicas aceitando qualquer extensão em maiúscula ou minúscula
     musicas = arquivos
       .filter(item => {
-        const k = item.key || item.name || "";
-        return k.endsWith('.mp3') || k.endsWith('.wav') || k.endsWith('.m4a');
+        const k = (item.key || item.name || "").toLowerCase();
+        return k.endsWith('.mp3') || k.endsWith('.wav') || k.endsWith('.m4a') || k.endsWith('.aac') || k.endsWith('.flac');
       })
       .map(item => ({
         titulo: item.key ? item.key.split('/').pop() : 'Música',
@@ -28,15 +27,26 @@ async function carregarMusicas() {
         url: `${CONFIG.API_URL}/${item.key}`
       }));
 
-    console.log("Músicas processadas:", musicas);
-    mostrarMusicas(musicas);
+    console.log("Músicas processadas na raiz:", musicas);
+
+    if (musicas.length > 0) {
+      mostrarMusicas(musicas);
+    } else {
+      if (container) {
+        container.innerHTML = `
+          <div style="padding:20px; color:#aaa">
+            Nenhuma música na raiz. Clique em <strong style="color:#00ff66; cursor:pointer;" onclick="document.getElementById('btn-pastas').click()">📁 Procurar por Pastas</strong> para navegar no R2.
+          </div>
+        `;
+      }
+    }
 
   } catch (erro) {
     console.error("Erro ao carregar músicas:", erro);
     if (container) {
       container.innerHTML = `
         <div style="padding:20px; color:#ff4444">
-          Não foi possível carregar as músicas da raiz. Use o botão <strong>Procurar por Pastas</strong> no menu lateral.
+          Erro ao conectar com a API.
         </div>
       `;
     }
@@ -83,7 +93,7 @@ async function buscarConteudoPasta(prefixo = "") {
       container.appendChild(itemVoltar);
     }
 
-    // 2. Subpastas
+    // 2. Exibir Subpastas (As 14 pastas que apareceram no seu console!)
     const pastas = dados.folders || [];
     if (pastas.length > 0) {
       pastas.forEach((pastaPath) => {
@@ -101,13 +111,14 @@ async function buscarConteudoPasta(prefixo = "") {
       });
     }
 
-    // 3. Músicas da pasta
+    // 3. Músicas da pasta selecionada
     const arquivos = dados.files || [];
     const faixasDaPasta = [];
 
     arquivos.forEach((file) => {
       const key = file.key || "";
-      if (key.endsWith(".mp3") || key.endsWith(".wav") || key.endsWith(".m4a")) {
+      const keyLower = key.toLowerCase();
+      if (keyLower.endsWith(".mp3") || keyLower.endsWith(".wav") || keyLower.endsWith(".m4a") || keyLower.endsWith(".aac") || keyLower.endsWith(".flac")) {
         const nomeMusica = key.split("/").pop();
         faixasDaPasta.push({
           titulo: nomeMusica,
